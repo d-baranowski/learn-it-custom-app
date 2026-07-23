@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package api.v1;
+
+import "google/protobuf/descriptor.proto";
+
+option go_package = "pkg/api/gen/api/v1;apiv1";
+
+extend google.protobuf.FileOptions {
+  bool ts_file_ignore = 10000;
+}
+
+extend google.protobuf.EnumOptions {
+  bool ts_enum_ignore = 11000;
+}
+
+extend google.protobuf.EnumValueOptions {
+  string ts_enum_desc = 12000;
+  bool ts_enum_disabled = 12001;
+}
+
+extend google.protobuf.MessageOptions {
+  bool ts_msg_ignore = 13000;
+  bool ts_grid = 13001;
+  string ts_grid_name = 13002;
+  //string go_model_name = 13003;
+}
+
+extend google.protobuf.FieldOptions {
+  TsGridOptions ts_grid_opts = 14000;
+  bool ts_update_disabled = 14001;
+  bool ts_exclude_disabled = 14002;
+}
+
+message ExcludeOpts {}
+
+message TsGridOptions {
+  message Column {
+    optional string id = 1;
+    optional string header = 2;
+    bool exclude = 3;
+    bool visible = 4;
+    optional string columnRendererType = 5;
+    optional bool enableSorting = 6;
+    optional string filterTarget = 7;
+    // Explicit column order. Fields without `order` fall back to their
+    // proto declaration index. Stable sort preserves declared order on ties.
+    optional int32 order = 8;
+  }
+  message Filter {
+    bool form = 1;
+    optional string formLabel = 2;
+    bool quick = 3;
+    optional string quickLabel = 4;
+    string type = 5;
+  }
+  Column column = 1;
+  optional Filter filter = 2;
+}

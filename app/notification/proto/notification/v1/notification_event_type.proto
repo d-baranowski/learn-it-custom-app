@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package notification.v1;
+
+import "request/v1/base.proto";
+import "api/v1/generators.proto";
+import "api/v1/permissions.proto";
+import "notification/v1/notification_common.proto";
+
+option go_package = "app/notification/gen/notification/v1;notificationv1";
+
+service NotificationEventTypeService {
+  option (api.v1.permissionKey) = "NotificationEventType";
+
+  rpc Autocomplete(request.v1.AutocompleteRequest) returns (request.v1.AutocompleteResponse);
+  rpc Get(request.v1.GetRequest) returns (NotificationEventType) {}
+}
+
+message NotificationEventType {
+  option (api.v1.ts_grid) = true;
+
+  string id = 1[(api.v1.ts_grid_opts) = { column: { visible: false } }];
+  string key = 2[(api.v1.ts_grid_opts) = { filter: { quick: true } }];
+  string displayName = 3[(api.v1.ts_grid_opts) = { filter: { quick: true } }];
+  optional string description = 4[(api.v1.ts_grid_opts) = { column: { visible: false } }];
+  repeated NotificationPayloadField payloadFields = 5[(api.v1.ts_grid_opts) = { column: { visible: false } }];
+  int32 version = 6[(api.v1.ts_grid_opts) = { column: { header: "Version", visible: true } }];
+}

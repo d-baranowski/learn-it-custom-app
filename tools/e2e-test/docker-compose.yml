@@ -1,0 +1,370 @@
+# E2E docker stack.
+#
+# Parallel-shard-ready: no hardcoded container names (compose project name
+# prefixes them), no hardcoded host ports for services Cypress doesn't need
+# to reach, and random host ports on the two services it DOES — UI (3000)
+# and bootstrap-api (8080). The Jenkinsfile discovers those via
+#   docker compose -p <project> port ui 3000
+# and passes CYPRESS_BASE_URL / CYPRESS_BOOTSTRAP_API_URL accordingly.
+#
+# Image tags are driven by $IMAGE_TAG (set by CI to the pipeline's tag,
+# e.g. UTR-000048). Defaults to `main` for local dev.
+#
+# Backend log persistence: every long-running service mirrors its logs to a
+# file under /var/log/utro, which is bind-mounted from ${E2E_LOG_DIR} on the
+# host. A host bind mount survives `docker compose down -v` and container
+# recreation, so the e2e controller (which sets E2E_LOG_DIR per shard and
+# pre-creates it writable) collects the logs from the host after teardown and
+# folds them into the E2E report. Go services honour LOG_FILE (pkg/logging);
+# postgres uses its logging_collector.
+
+services:
+  postgres:
+    build:
+      dockerfile: ./docker/postgres/Dockerfile
+    command: [
+      "postgres",
+      "-c", "log_destination=stderr",
+      "-c", "logging_collector=on",
+      "-c", "log_directory=/var/log/utro",
+      "-c", "log_filename=postgres.log",
+      # Postgres defaults log files to 0600 owned by its container uid, which
+      # the CI (Jenkins) user then can't read when archiving/caching the logs.
+      # 0644 keeps them world-readable so `cp -a`/archiveArtifacts succeed.
+      "-c", "log_file_mode=0644",
+      "-c", "shared_preload_libraries=pg_cron",
+      "-c", "wal_level=logical",
+      "-c", "max_wal_senders=10",
+      "-c", "max_replication_slots=10",
+      "-c", "cron.database_name=rpg",
+    ]
+    restart: always
+    shm_size: 4g
+    volumes:
+      - ./docker/postgres/initdb.d:/docker-entrypoint-initdb.d:ro
+      - postgres_data:/var/lib/postgresql/data
+      - ${E2E_LOG_DIR:-./cypress/logs}:/var/log/utro
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      timeout: 1s
+      retries: 10
+    networks:
+      - rpg
+
+  pgadmin:
+    image: dpage/pgadmin4
+    profiles: ["debug"]
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    volumes:
+      - ./docker/pgadmin_config/servers.json:/pgadmin4/servers.json
+      - ./docker/pgadmin_config/.pgpass:/var/lib/pgadmin/.pgpass
+    depends_on:
+      - postgres
+    networks:
+      - rpg
+
+  migrate:
+    image: ${IMAGE_REGISTRY:-ghcr.io/inspiration-particle}/utro-core:${IMAGE_TAG:-main}
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      MIGRATE: true
+      DB_USER: postgres
+      DB_PASS: password
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: rpg
+      LOG_LEVEL: debug
+      TIMEZONE: Europe/Warsaw
+    networks:
+      - rpg
+
+  notification-migrate:
+    image: ${IMAGE_REGISTRY:-ghcr.io/inspiration-particle}/utro-notification:${IMAGE_TAG:-main}
+    restart: "no"
+    entrypoint: ["/app/notification"]
+    command: ["-migrate=true"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      DB_USER: postgres
+      DB_PASS: password
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: rpg
+      LOG_LEVEL: debug
+      TIMEZONE: Europe/Warsaw
+    networks:
+      - rpg
+
+  bootstrap:
+    image: ${IMAGE_REGISTRY:-ghcr.io/inspiration-particle}/utro-bootstrap:${IMAGE_TAG:-main}
+    restart: "no"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      notification-migrate:
+        condition: service_completed_successfully
+    environment:
+      DB_USER: postgres
+      DB_PASS: password
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: rpg
+      LOG_LEVEL: debug
+      TIMEZONE: Europe/Warsaw
+      # Seed fixed E2E auth sessions so Cypress can inject the auth cookie and
+      # skip the login UI (non-seeded stack path; the seeded image bakes them).
+      SEED_E2E_SESSIONS: "true"
+    networks:
+      - rpg
+
+  bootstrap-api:
+    image: ${IMAGE_REGISTRY:-ghcr.io/inspiration-particle}/utro-bootstrap:${IMAGE_TAG:-main}
+    restart: "no"
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+      core:
+        condition: service_started
+    environment:
+      ENABLE_DEV_API: "true"
+      DB_USER: postgres
+      DB_PASS: password
+      DB_HOST: postgres
+      DB_PORT: 5432
+      CORE_API_URL: http://core:9102
+      NOTIFICATION_API_URL: http://notification:9002
+      DB_NAME: rpg
+      LOG_LEVEL: debug
+      LOG_FILE: /var/log/utro/bootstrap-api.log
+      TIMEZONE: Europe/Warsaw
+      # Reset (ResetDatabase) re-runs bootstrap seeding — keep the E2E auth
+      # sessions present after every DB reset.
+      SEED_E2E_SESSIONS: "true"
+    volumes:
+      - ${E2E_LOG_DIR:-./cypress/logs}:/var/log/utro
+    ports:
+      # Random host port — Jenkins discovers via `docker compose port bootstrap-api 8080`.
+      - "8080"
+    networks:
+      - rpg
+
+  core:
+    image: ${IMAGE_REGISTRY:-ghcr.io/inspiration-particle}/utro-core:${IMAGE_TAG:-main}
+    restart: "always"
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+    environment:
+      MIGRATE: false
+      API_PORT: 9102
+      DB_USER: postgres
+      DB_PASS: password
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: rpg
+      LOG_LEVEL: debug
+      LOG_FILE: /var/log/utro/core.log
+      TIMEZONE: Europe/Warsaw
+      ENABLE_DEV_API: true
+      # Core's AddPaymentLink calls payment-service directly (not via gateway).
+      # Default is `http://rpg.payment` which doesn't resolve here; point at
+      # the compose service name + payment's API_PORT.
+      PAYMENT_SERVICE_URL: http://payment:9001
+    volumes:
+      - ${E2E_LOG_DIR:-./cypress/logs}:/var/log/utro
+    networks:
+      - rpg
+
+  # Payment microservice has its own DB schema (`payment.payment_link`) and
+  # therefore its own embedded migrations. The `migrate` service above only
+  # runs core's migrations, so payment's table never gets created without
+  # this dedicated step. Running the payment binary with `-migrate=true`
+  # invokes goose against the embedded SQL files.
+  payment-migrate:
+    image: ${IMAGE_REGISTRY:-ghcr.io/inspiration-particle}/utro-payment:${IMAGE_TAG:-main}
+    restart: "no"
+    entrypoint: ["/app/payment"]
+    command: ["-migrate=true"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_USER: postgres
+      DB_PASS: password
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: rpg
+      LOG_LEVEL: debug
+      TIMEZONE: Europe/Warsaw
+    networks:
+      - rpg
+
+  # Payment microservice. Stripe keys are interpolated from the host
+  # environment so secrets never sit in the repo. CI injects them via
+  # `withCredentials` in the Jenkinsfile; for local docker-compose runs,
+  # `export STRIPE_PUBLISHABLE_KEY=… STRIPE_SECRET_KEY=…` first.
+  # STRIPE_WEBHOOK_SECRET is optional — defaults to empty when not configured.
+  payment:
+    image: ${IMAGE_REGISTRY:-ghcr.io/inspiration-particle}/utro-payment:${IMAGE_TAG:-main}
+    restart: "always"
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+      payment-migrate:
+        condition: service_completed_successfully
+    environment:
+      API_PORT: 9001
+      DB_USER: postgres
+      DB_PASS: password
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: rpg
+      LOG_LEVEL: debug
+      LOG_FILE: /var/log/utro/payment.log
+      TIMEZONE: Europe/Warsaw
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+    volumes:
+      - ${E2E_LOG_DIR:-./cypress/logs}:/var/log/utro
+    networks:
+      - rpg
+
+  # core-event owns the CDC layer: replica identity + publication migrations,
+  # then a WAL logical-replication consumer that publishes core row changes
+  # as domain events (pgmq). Postgres runs with wal_level=logical for it.
+  core-event-migrate:
+    image: ${IMAGE_REGISTRY:-ghcr.io/inspiration-particle}/utro-core-event:${IMAGE_TAG:-main}
+    restart: "no"
+    command: ["-migrate=true"]
+    depends_on:
+      # Its migrations ALTER core.session/core.therapist — core schema first.
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      DB_USER: postgres
+      DB_PASS: password
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: rpg
+      DB_SEARCH_PATH: core,public
+      LOG_LEVEL: debug
+      TIMEZONE: Europe/Warsaw
+    networks:
+      - rpg
+
+  core-event:
+    image: ${IMAGE_REGISTRY:-ghcr.io/inspiration-particle}/utro-core-event:${IMAGE_TAG:-main}
+    restart: "always"
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+      core-event-migrate:
+        condition: service_completed_successfully
+    environment:
+      DB_USER: postgres
+      DB_PASS: password
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: rpg
+      DB_SEARCH_PATH: core,public
+      LOG_LEVEL: debug
+      LOG_FILE: /var/log/utro/core-event.log
+      TIMEZONE: Europe/Warsaw
+      HEALTH_PORT: 18010
+      WAL_PUBLICATION_NAME: core_event_pub
+      WAL_SLOT_NAME: core_event_slot
+    volumes:
+      - ${E2E_LOG_DIR:-./cypress/logs}:/var/log/utro
+    networks:
+      - rpg
+
+  notification:
+    image: ${IMAGE_REGISTRY:-ghcr.io/inspiration-particle}/utro-notification:${IMAGE_TAG:-main}
+    restart: "always"
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+      notification-migrate:
+        condition: service_completed_successfully
+    environment:
+      API_PORT: 9002
+      DB_USER: postgres
+      DB_PASS: password
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: rpg
+      LOG_LEVEL: debug
+      LOG_FILE: /var/log/utro/notification.log
+      TIMEZONE: Europe/Warsaw
+      ENABLE_DEV_API: true
+    volumes:
+      - ${E2E_LOG_DIR:-./cypress/logs}:/var/log/utro
+    networks:
+      - rpg
+
+  gateway:
+    image: ${IMAGE_REGISTRY:-ghcr.io/inspiration-particle}/utro-gateway:${IMAGE_TAG:-main}
+    restart: "always"
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+    environment:
+      CORE_SERVICE: core:9102
+      PAYMENT_SERVICE: http://payment:9001
+      NOTIFICATION_SERVICE: http://notification:9002
+      WITH_PERMISSIONS: true
+      API_PORT: 9999
+      ENABLE_PERMISSIONS: true
+      RPG_PERMISSIONS_FLAG: true
+      LOG_TEXT_FORMAT: true
+      DB_USER: postgres
+      DB_PASS: password
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: rpg
+      LOG_LEVEL: debug
+      LOG_FILE: /var/log/utro/gateway.log
+      TIMEZONE: Europe/Warsaw
+    volumes:
+      - ${E2E_LOG_DIR:-./cypress/logs}:/var/log/utro
+    networks:
+      - rpg
+
+  ui:
+    image: ${IMAGE_REGISTRY:-ghcr.io/inspiration-particle}/utro-ui:${IMAGE_TAG:-main}
+    restart: "always"
+    depends_on:
+      core:
+        condition: service_started
+      gateway:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      BFF_URL: http://gateway:9999
+      PORT: 3000
+      NEXT_TELEMETRY_DISABLED: "1"
+    ports:
+      # Random host port — Jenkins discovers via `docker compose port ui 3000`.
+      - "3000"
+    networks:
+      - rpg
+
+networks:
+  rpg:
+    driver: bridge
+
+volumes:
+  postgres_data:

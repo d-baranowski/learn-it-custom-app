@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package core.session.v1;
+
+import "google/protobuf/empty.proto";
+import "core/v1/user.proto";
+
+option go_package = "app/core/gen/core/session/v1;sessionv1";
+
+service SessionService {
+  rpc GetUserSession(GetUserSessionRequest) returns (UserSession) {}
+  rpc CreateUserSession(CreateUserSessionRequest) returns (UserSession) {}
+  rpc UpdateUserSession(UpdateUserSessionRequest) returns (UserSession) {}
+  rpc DeleteUserSession(DeleteUserSessionRequest) returns (google.protobuf.Empty) {}
+}
+
+message UserSession {
+  string id = 1;
+  string userId = 2;
+  core.v1.User user = 5;
+  int64 createdAt = 3;
+  int64 expires = 4;
+}
+
+message GetUserSessionRequest {
+  string id = 1;
+}
+
+message CreateUserSessionRequest {
+  optional string userId = 1;
+  optional string email = 2;
+}
+
+message UpdateUserSessionRequest {
+  string id = 1;
+  string userId = 2;
+  int64 expires = 3;
+}
+
+message DeleteUserSessionRequest {
+  string id = 1;
+}

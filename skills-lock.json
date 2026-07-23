@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "skills": {
+    "ai-readiness-audit": {
+      "source": "git@github.com:inspiration-particle/ai-readiness-repo-checker-skill.git",
+      "sourceType": "git",
+      "computedHash": "e2a65bbe1a53cbaa74fdd039dda383b10485c0a228f14d00807782467129126a"
+    },
+    "ccc": {
+      "source": "cocoindex-io/cocoindex-code",
+      "sourceType": "github",
+      "computedHash": "485211ec7ef033f784261d1dba56770fea20163aebdd482950e8d4878b74c6b2"
+    }
+  }
+}

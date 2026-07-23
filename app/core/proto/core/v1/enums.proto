@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package common.v1;
+
+import "api/v1/generators.proto";
+
+option go_package = "app/core/gen/core/v1;corev1";
+
+// DayOfWeek represents a day of the week using ISO 8601 standard
+// where Monday is 1 and Sunday is 7.
+enum DayOfWeek {
+  // The day of the week is unspecified.
+  DAY_OF_WEEK_UNSPECIFIED = 0;
+
+  // Monday
+  MONDAY = 1 [(api.v1.ts_enum_desc) = "Monday"];
+
+  // Tuesday
+  TUESDAY = 2 [(api.v1.ts_enum_desc) = "Tuesday"];
+
+  // Wednesday
+  WEDNESDAY = 3 [(api.v1.ts_enum_desc) = "Wednesday"];
+
+  // Thursday
+  THURSDAY = 4 [(api.v1.ts_enum_desc) = "Thursday"];
+
+  // Friday
+  FRIDAY = 5 [(api.v1.ts_enum_desc) = "Friday"];
+
+  // Saturday
+  SATURDAY = 6 [(api.v1.ts_enum_desc) = "Saturday"];
+
+  // Sunday
+  SUNDAY = 7 [(api.v1.ts_enum_desc) = "Sunday"];
+}
+
+// FrequencyUnit represents the unit of time for recurring frequencies
+enum FrequencyUnit {
+  // The frequency unit is unspecified.
+  FREQUENCY_UNIT_UNSPECIFIED = 0;
+
+  // Week-based frequency (every N weeks)
+  WEEK = 1 [(api.v1.ts_enum_desc) = "Week"];
+
+  // Month-based frequency (every N months)
+  MONTH = 2 [(api.v1.ts_enum_desc) = "Month"];
+}
+

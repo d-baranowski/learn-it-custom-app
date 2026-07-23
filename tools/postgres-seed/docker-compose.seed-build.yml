@@ -1,0 +1,160 @@
+# Minimal compose stack used by build-seeded-image.sh to produce
+# utro-postgres-seeded:<SCHEMA_HASH>.
+#
+# Differs from tools/e2e-test/docker-compose.yml in two important ways:
+#
+#   1. NO named volume on postgres /var/lib/postgresql/data — we WANT the
+#      seeded data to land in the container's filesystem so `docker commit`
+#      captures it. Named volumes are excluded from the commit.
+#
+#   2. NO app services (gateway/core/ui/payment). We only need postgres +
+#      migrate + payment-migrate + bootstrap to populate the schema and seed,
+#      after which we commit and discard the running container.
+#
+# Source binary images come from $UTRO_CORE_IMAGE / $UTRO_PAYMENT_IMAGE /
+# $UTRO_BOOTSTRAP_IMAGE so the script can pin to the just-built IMAGE_TAG_SHA.
+
+services:
+  postgres:
+    build:
+      context: ../..
+      dockerfile: ./docker/postgres/Dockerfile
+    command: [
+      "postgres",
+      "-c", "log_destination=stderr",
+      "-c", "shared_preload_libraries=pg_cron",
+      "-c", "wal_level=logical",
+      "-c", "max_wal_senders=10",
+      "-c", "max_replication_slots=10",
+      "-c", "cron.database_name=rpg",
+    ]
+    shm_size: 4g
+    volumes:
+      - ../../docker/postgres/initdb.d:/docker-entrypoint-initdb.d:ro
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      # Store the seeded data at /var/lib/postgresql/seeded instead of the
+      # default /var/lib/postgresql/data. Reason: tools/e2e-test/docker-
+      # compose.yml has `postgres_data:/var/lib/postgresql/data` as a named
+      # volume, and compose merges volume lists across override files by
+      # CONCATENATION (no clean "remove" without compose 2.24's !override).
+      # On the E2E shard, a fresh empty named volume gets created and
+      # mounted at /data — which would shadow the seeded data inside the
+      # image. Moving the data to /seeded sidesteps the merge entirely:
+      # postgres reads PGDATA env (baked into the seeded image via
+      # docker commit --change), the /data volume mount is irrelevant.
+      PGDATA: /var/lib/postgresql/seeded
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      timeout: 1s
+      retries: 10
+    networks:
+      - seed
+
+  migrate:
+    image: ${UTRO_CORE_IMAGE}
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      MIGRATE: true
+      DB_USER: postgres
+      DB_PASS: password
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: rpg
+      LOG_LEVEL: debug
+      TIMEZONE: Europe/Warsaw
+    networks:
+      - seed
+
+  payment-migrate:
+    image: ${UTRO_PAYMENT_IMAGE}
+    restart: "no"
+    entrypoint: ["/app/payment"]
+    command: ["-migrate=true"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_USER: postgres
+      DB_PASS: password
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: rpg
+      LOG_LEVEL: debug
+      TIMEZONE: Europe/Warsaw
+    networks:
+      - seed
+
+  notification-migrate:
+    image: ${UTRO_NOTIFICATION_IMAGE}
+    restart: "no"
+    entrypoint: ["/app/notification"]
+    command: ["-migrate=true"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      DB_USER: postgres
+      DB_PASS: password
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: rpg
+      LOG_LEVEL: debug
+      TIMEZONE: Europe/Warsaw
+    networks:
+      - seed
+
+  core-event-migrate:
+    image: ${UTRO_CORE_EVENT_IMAGE}
+    restart: "no"
+    command: ["-migrate=true"]
+    depends_on:
+      # ALTERs core.session/core.therapist — core migrations first.
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      DB_USER: postgres
+      DB_PASS: password
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: rpg
+      DB_SEARCH_PATH: core,public
+      LOG_LEVEL: debug
+      TIMEZONE: Europe/Warsaw
+    networks:
+      - seed
+
+  bootstrap:
+    image: ${UTRO_BOOTSTRAP_IMAGE}
+    restart: "no"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      payment-migrate:
+        condition: service_completed_successfully
+      notification-migrate:
+        condition: service_completed_successfully
+      core-event-migrate:
+        condition: service_completed_successfully
+    environment:
+      DB_USER: postgres
+      DB_PASS: password
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: rpg
+      LOG_LEVEL: debug
+      TIMEZONE: Europe/Warsaw
+      # Bake the fixed E2E auth sessions into the seeded image so Cypress can
+      # inject the auth cookie and skip the login UI.
+      SEED_E2E_SESSIONS: "true"
+    networks:
+      - seed
+
+networks:
+  seed:
+    driver: bridge

@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+package payment.v1;
+
+import "request/v1/base.proto";
+import "api/v1/generators.proto";
+import "api/v1/permissions.proto";
+import "buf/validate/validate.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "app/payment/gen/payment/v1;paymentv1";
+
+service InvoiceService {
+  option (api.v1.permissionKey) = "Invoice";
+
+  rpc Autocomplete(request.v1.AutocompleteRequest) returns (request.v1.AutocompleteResponse);
+  rpc Create(SaveInvoiceRequest) returns (Invoice) {}
+  rpc Get(request.v1.GetRequest) returns (Invoice) {}
+  rpc List(request.v1.SelectRequest) returns (ListInvoiceResponse) {}
+  rpc Update(SaveInvoiceRequest) returns (Invoice) {}
+  rpc SoftDelete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+  rpc Delete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+}
+
+message Invoice {
+  option (api.v1.ts_grid) = true;
+
+  string id = 1[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+
+  // Stripe Invoice fields
+  string object = 2;
+  int64 amount_due = 3;
+  int64 amount_paid = 4;
+  int64 amount_remaining = 5;
+  optional int64 application_fee_amount = 6;
+  int32 attempt_count = 7;
+  bool attempted = 8;
+  optional bool auto_advance = 9;
+  optional string billing_reason = 10;
+  optional string collection_method = 11;
+  int64 created = 12;
+  string currency = 13;
+  optional string customer = 14;
+  optional string description = 15;
+  optional int64 due_date = 16;
+  optional string footer = 17;
+  optional string hosted_invoice_url = 18;
+  optional string invoice_pdf = 19;
+  bool livemode = 20;
+  optional string number = 21;
+  bool paid = 22;
+  optional bool paid_out_of_band = 23;
+  optional string payment_intent = 24;
+  optional int64 period_end = 25;
+  optional int64 period_start = 26;
+  optional string status = 27;
+  int64 subtotal = 28;
+  optional int64 tax = 29;
+  int64 total = 30;
+
+  int64 createdAt = 100;
+  string createdBy = 101;
+  optional string createdByLabel = 102;
+  optional int64 updatedAt = 103;
+  optional string updatedBy = 104;
+  optional string updatedByLabel = 105;
+  optional int64 deletedAt = 106;
+  optional string deletedBy = 107;
+  optional string deletedByLabel = 108;
+}
+
+message SaveInvoiceRequest {
+  string id = 1;
+  optional string customer = 2;
+  optional string description = 3;
+  optional string currency = 4;
+  // Amount in minor units (grosze for PLN), matching Stripe's native format.
+  // Sent verbatim to Stripe; do NOT pass a major-unit (PLN) value here.
+  optional int64 amount = 5;
+
+  // Multiple line items for the invoice
+  repeated InvoiceLineItem items = 6;
+}
+
+message InvoiceLineItem {
+  string description = 1 [
+    (buf.validate.field).required = true
+  ];
+  // Amount in minor units (grosze for PLN), matching Stripe's native format.
+  // Sent verbatim to Stripe; do NOT pass a major-unit (PLN) value here.
+  int64 amount = 2 [
+    (buf.validate.field).int64.gt = 0
+  ];
+  int32 quantity = 3 [
+    (buf.validate.field).int32.gte = 1
+  ];
+  optional string currency = 4;
+}
+
+message ListInvoiceResponse {
+  repeated Invoice items = 1;
+  request.v1.PaginationResponse pagination = 2;
+}

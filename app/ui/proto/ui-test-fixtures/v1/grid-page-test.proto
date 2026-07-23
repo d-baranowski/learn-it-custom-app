@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package api.v1;
+
+import "request/v1/base.proto";
+import "api/v1/generators.proto";
+import "api/v1/permissions.proto";
+
+option go_package = "pkg/ui-test-fixtures/gen/ui-test-fixtures/v1;uitestfixturesv1";
+
+// Do not alter these types, they are used for testing purposes
+
+service GridPageService {
+  option (api.v1.permissionKey) = "GridPage";
+
+  rpc Get(request.v1.GetRequest) returns (GridPageTestModel);
+  rpc List(request.v1.SelectRequest) returns (GridPageTestListResponse);
+  rpc Create(SaveGridPageTestModelRequest) returns (GridPageTestModel);
+  rpc Update(SaveGridPageTestModelRequest) returns (GridPageTestModel);
+  rpc SoftDelete(request.v1.DeleteRequest) returns (request.v1.DeleteRequest);
+  rpc Delete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+}
+
+message GridPageTestModel {
+  option (api.v1.ts_grid) = true;
+
+  string id = 1;
+  bool requiredBoolean = 2;
+  optional bool optionalBoolean = 3;
+  string requiredString = 4;
+  optional string optionalString = 5;
+  repeated string repeatedString = 6;
+  int64 requiredDate = 7 [(ts_grid_opts) = {
+    column: {columnRendererType: "date", visible: true}
+  }];
+  optional int64 optionalDate = 8 [(ts_grid_opts) = {
+    column: {columnRendererType: "date", visible: true}
+  }];
+  int64 requiredDateTime = 9;
+  optional int64 optionalDateTime = 10;
+  PageElementTestEnum requiredEnum = 11;
+  optional PageElementTestEnum optionalEnum = 12;
+  repeated PageElementTestEnum repeatedEnum = 13;
+  int32 requiredNumber = 14;
+  optional int32 optionalNumber = 15;
+  repeated int32 repeatedNumber = 16;
+  string decimal = 17;
+  int64 requiredTime = 18 [(ts_grid_opts) = {
+    column: {columnRendererType: "time", visible: true}
+  }];
+  optional int64 optionalTime = 19 [(ts_grid_opts) = {
+    column: {columnRendererType: "time", visible: true}
+  }];
+}
+
+message GridPageTestListResponse {
+  repeated GridPageTestModel items = 1;
+  request.v1.PaginationResponse pagination = 2;
+}
+
+message SaveGridPageTestModelRequest {
+  string id = 1;
+  bool requiredBoolean = 2;
+  optional bool optionalBoolean = 3;
+  string requiredString = 4;
+  optional string optionalString = 5;
+  repeated string repeatedString = 6;
+  int64 requiredDate = 7;
+  optional int64 optionalDate = 8;
+  int64 requiredDateTime = 9;
+  optional int64 optionalDateTime = 10;
+  PageElementTestEnum requiredEnum = 11;
+  optional PageElementTestEnum optionalEnum = 12;
+  repeated PageElementTestEnum repeatedEnum = 13;
+  int32 requiredNumber = 14;
+  optional int32 optionalNumber = 15;
+  repeated int32 repeatedNumber = 16;
+  string decimal = 17;
+}
+
+enum PageElementTestEnum {
+  PETE_UNSPECIFIED = 0;
+  PETE_FIRST = 1 [(ts_enum_desc) = "First"];
+  PETE_SECOND = 2 [(ts_enum_desc) = "Second"];
+  PETE_THIRD = 3 [(ts_enum_desc) = "Third"];
+}

@@ -1,0 +1,56 @@
+{
+  "name": "form-validator",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "wasm/form-validator",
+  "tags": ["go", "wasm"],
+  "targets": {
+    "deps": {
+      "cache": true,
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{projectRoot}",
+        "commands": [
+          "pnpm install"
+        ],
+        "parallel": false
+      }
+    },
+    "tidy": {
+      "dependsOn": ["deps"]
+    },
+    "build": {
+      "cache": true,
+      "executor": "nx:run-commands",
+      "dependsOn": [
+        {"target": "generate", "projects": "api"},
+        {"target": "generate", "projects": "request"},
+        {"target": "generate", "projects": "core"},
+        {"target": "generate", "projects": "notification"}
+      ],
+      "outputs": ["{projectRoot}/dist"],
+      "options": {
+        "cwd": "{projectRoot}",
+        "parallel": false,
+        "commands": [
+          "mkdir -p dist",
+          "GOOS=js GOARCH=wasm go build -o dist/form-validator.wasm ."
+        ]
+      }
+    },
+
+    "serve": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["build"],
+      "options": {
+        "cwd": "{projectRoot}",
+        "parallel": false,
+        "commands": [
+          "npx http-server -o -c-1 -p 0 ."
+        ]
+      }
+    }
+
+  }
+
+}

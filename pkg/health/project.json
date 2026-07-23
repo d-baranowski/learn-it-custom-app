@@ -1,0 +1,12 @@
+{
+  "name": "health",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "pkg/health",
+  "tags": ["go"],
+  "targets": {
+    "test": {},
+    "lint": {},
+    "tidy": {}
+  }
+}

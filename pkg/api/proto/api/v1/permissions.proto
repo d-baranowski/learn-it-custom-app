@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package api.v1;
+
+import "api/v1/generators.proto";
+import "google/protobuf/descriptor.proto";
+
+option go_package = "pkg/api/gen/api/v1;apiv1";
+
+extend google.protobuf.ServiceOptions {
+  bool backendOnly = 11000;
+  string permissionKey = 11001;
+  string permissionParent = 11002;
+}
+
+extend google.protobuf.MethodOptions {
+  string permissionAbility = 12000;
+  bool permissionAllowAll = 12001;
+  bool permissionDenyAll = 12002;
+  optional bool hideAbility = 12003;
+}

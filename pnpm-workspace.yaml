@@ -1,0 +1,42 @@
+# ── Build-script allowlist ────────────────────────────────────────────
+# In pnpm 10+ install/postinstall scripts are blocked by default; only
+# packages listed here may run their lifecycle scripts. Adding a
+# package = trusting its install scripts with your machine, so think
+# twice. (See dangerouslyAllowAllBuilds=false below — toggling that
+# bypasses this allowlist entirely.)
+allowBuilds:
+  '@bufbuild/buf': true
+  '@parcel/watcher': true
+  nx: true
+
+# ── Supply-chain hardening ────────────────────────────────────────────
+
+# Block packages published less than 48 hours ago. Mitigates the
+# "compromised maintainer publishes malicious version, security teams
+# yank it within hours" attack — by the time we'd install such a
+# package the registry has usually pulled it. Unit is minutes:
+# 48h × 60min = 2880.
+minimumReleaseAge: 2880
+
+# Force the full tarball URL into pnpm-lock.yaml. Without this,
+# subsequent installs trust whatever the registry returns at resolve
+# time; with it, the locked URL must be byte-identical, so a
+# compromised registry can't silently swap a tarball for a different
+# package (only by also changing the URL, which is visible in diff).
+lockfileIncludeTarballUrl: true
+
+# Disallow lifecycle scripts on any package not on the allowBuilds
+# allowlist above. pnpm 10+'s default is already to block-all; this
+# line is explicit so re-enabling all scripts (toggling to `true`)
+# requires a visible diff during review.
+dangerouslyAllowAllBuilds: false
+
+# Refuse to install when a peer dep is missing or version-mismatched.
+# Catches deliberate-typo-squatted packages whose peer deps don't
+# line up, and tampered lockfiles where a transitive's peer was
+# silently swapped.
+strictPeerDependencies: true
+
+# Verify every package in the local store still matches its
+# integrity hash before reuse across projects.
+verifyStoreIntegrity: true

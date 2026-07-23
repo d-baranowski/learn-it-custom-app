@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package core.v1;
+
+import "api/v1/permissions.proto";
+import "buf/validate/validate.proto";
+
+option go_package = "app/core/gen/core/v1;corev1";
+
+service SessionValidationService {
+  rpc GetSessionIssues(GetSessionIssuesRequest) returns (GetSessionIssuesResponse) {
+    option (api.v1.permissionAllowAll) = true;
+  }
+}
+
+message GetSessionIssuesRequest {
+  // Start date in YYYY-MM-DD format.
+  string startDate = 1 [(buf.validate.field).string.min_len = 10];
+  // End date in YYYY-MM-DD format.
+  string endDate = 2 [(buf.validate.field).string.min_len = 10];
+}
+
+message GetSessionIssuesResponse {
+  repeated SessionIssue issues = 1;
+}
+
+message SessionIssue {
+  string sessionId = 1;
+  string issueType = 2; // "no_room", "room_overlap", "therapist_overlap", "therapist_absence_overlap", "outside_availability"
+  string description = 3;
+  // Session date in YYYY-MM-DD format.
+  string date = 4;
+  // Session start time in HH:MM format (24h).
+  string startTime = 5;
+  optional string therapistId = 6;
+  optional string therapistLabel = 7;
+  optional string roomId = 8;
+  optional string roomLabel = 9;
+  optional string therapyLabel = 10;
+  // For overlap issues, this contains the conflicting session ID
+  optional string conflictingSessionId = 11;
+  optional string conflictingSessionLabel = 12;
+  // For absence issues
+  optional string absenceId = 13;
+  optional string absenceReason = 14;
+  // Session end time in HH:MM format (24h).
+  string endTime = 15;
+}

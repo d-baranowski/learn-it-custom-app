@@ -1,0 +1,24 @@
+{
+  "name": "core",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "app/core",
+  "tags": ["api", "go", "backend"],
+  "targets": {
+    "generate": {},
+    "migrate": {},
+    "build": {},
+    "serve": {},
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{workspaceRoot}/app/core",
+        "command": "USER=postgres ENV_FILE=./.env.dev air -c air.toml"
+      }
+    },
+    "test": {},
+    "lint": {},
+    "tidy": {},
+    "container": {}
+  }
+}

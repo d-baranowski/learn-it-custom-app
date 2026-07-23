@@ -1,0 +1,13 @@
+{
+  "name": "repository",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "pkg/repository",
+  "tags": ["go"],
+  "targets": {
+    "clean": {},
+    "test": {},
+    "lint": {},
+    "tidy": {}
+  }
+}

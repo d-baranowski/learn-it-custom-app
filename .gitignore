@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build / cache output
+dist/
+build/
+out/
+.next/
+.nx/cache
+.nx/workspace-data
+tmp/
+
+# Test / coverage
+coverage/
+test-output/
+
+# Environment files — never commit real values; ship .example templates only
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Logs / editor / OS
+*.log
+.DS_Store
+.idea/
+.vscode/

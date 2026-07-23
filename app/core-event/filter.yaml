@@ -1,0 +1,9 @@
+schema:
+  - name: core
+    tables:
+      session:
+        - INSERT
+        - UPDATE
+        - DELETE
+      therapist:
+        - INSERT

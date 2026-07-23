@@ -1,0 +1,161 @@
+syntax = "proto3";
+
+package request.v1;
+
+import "google/protobuf/any.proto";
+
+option go_package = "pkg/request/gen/request/v1;requestv1";
+
+message AutocompleteRequest {
+  optional Where where = 1;
+  repeated OrderBy order = 2;
+}
+
+message AutocompleteItem {
+  string ID = 1;
+  string label = 2;
+  optional bool disabled = 3;
+  optional string group = 4;
+}
+
+message AutocompleteResponse {
+  repeated AutocompleteItem items = 1;
+}
+
+message GetRequest {
+  string ID = 1;
+}
+
+enum DeletedState {
+  DS_UNSPECIFIED = 0;
+  DS_ONLY_DELETED = 1; // [(ts_enum_desc) = "Show only deleted rows"];
+  DS_ALL = 2; // [(ts_enum_desc) = "Show deleted and non-deleted rows"];
+  DS_NOT_DELETED = 3; // [(ts_enum_desc) = "Show only not deleted rows (default)"];
+}
+
+message SelectRequest {
+  optional string requestID = 1;
+  repeated string select = 2;
+  bool selectAll = 3;
+  optional Where where = 4;
+  repeated OrderBy order = 5;
+  optional Pagination pagination = 6;
+  DeletedState deletedState = 7;
+}
+
+//message UpdateRequest {
+//  google.protobuf.Any data = 1;
+//  repeated string fields = 2;
+//  optional Where where = 3;
+//}
+
+message SoftDeleteRequest {
+  repeated string IDs = 1;
+}
+
+message SoftDeleteResponse {
+  int32 rowsAffected = 1;
+}
+
+message DeleteRequest {
+  repeated string IDs = 1;
+  optional Where where = 2;
+  bool force = 3;
+}
+
+message DeleteResponse {
+  int32 rowsAffected = 1;
+}
+
+message Where {
+  message Condition {
+    oneof condition {
+      Clause clause = 1;
+      Where group = 2;
+      SubQuery subQuery = 3;
+    }
+  }
+
+  message Clause {
+    string field = 1;
+    WhereOperator operator = 2;
+    string value = 3;
+    Mode mode = 4;
+  }
+
+  message SubQuery {
+    string field = 1;
+    string column = 2;
+    WhereOperator operator = 4;
+    Where subQuery = 5;
+  }
+  repeated Condition conditions = 1;
+  Mode mode = 2;
+
+  enum Mode {
+    AND = 0;
+    OR = 1;
+  }
+}
+
+enum WhereOperator {
+  EQ = 0; // [(base.v1.ts_enum_desc) = "Equal"]
+  NEQ = 1; // [(base.v1.ts_enum_desc) = "Not Equal"];
+  GT = 2; // [(base.v1.ts_enum_desc) = "Greater Than"];
+  GTE = 3; // [(base.v1.ts_enum_desc) = "Greater Than or Equal"];
+  LT = 4; // [(base.v1.ts_enum_desc) = "Less Than"];
+  LTE = 5; // [(base.v1.ts_enum_desc) = "Less Than or Equal"];
+  COL_IN_VAL = 6; // [(base.v1.ts_enum_desc) = "In"];
+  COL_NIN_VAL = 7; // [(base.v1.ts_enum_desc) = "Not In"];
+  VAL_IN_COL = 8; // [(base.v1.ts_enum_desc) = "In"];
+  VAL_NIN_COL = 9; // [(base.v1.ts_enum_desc) = "Not In"];
+  LIKE = 10; // [(base.v1.ts_enum_desc) = "Contains"];
+  NLIKE = 11; // [(base.v1.ts_enum_desc) = "Does Not Contain"];
+  ILIKE = 12; // [(base.v1.ts_enum_desc) = "Contains No Case"];
+  NILIKE = 13; // [(base.v1.ts_enum_desc) = "Does Not Contain No Case"];
+  BETWEEN = 14; // [(base.v1.ts_enum_desc) = "Between"];
+  NBETWEEN = 15; // [(base.v1.ts_enum_desc) = "Not Between"];
+  ISNULL = 16; // [(base.v1.ts_enum_desc) = "Is Null"];
+  NOTNULL = 17; // [(base.v1.ts_enum_desc) = "Not Null"];
+  STARTSWITH = 18; // [(base.v1.ts_enum_desc) = "Starts With"];
+  NSTARTSWITH = 19; // [(base.v1.ts_enum_desc) = "Does Not Start With"];
+  ENDSWITH = 20; // [(base.v1.ts_enum_desc) = "Ends With"];
+  NENDSWITH = 21; // [(base.v1.ts_enum_desc) = "Does Not End With"];
+  ISTARTSWITH = 22; // [(base.v1.ts_enum_desc) = "Starts With No Case"];
+  NISTARTSWITH = 23; // [(base.v1.ts_enum_desc) = "Does Not Starts With No Case"];
+  IENDSWITH = 24; // [(base.v1.ts_enum_desc) = "Ends With No Case"];
+  NIENDSWITH = 25; // [(base.v1.ts_enum_desc) = "Does Not End With No Case"];
+  BITWISEAND = 26; // [(base.v1.ts_enum_desc) = "Bitwise And"];
+  NBITWISEAND = 27; // [(base.v1.ts_enum_desc) = "Not Bitwise And"];
+  BITWISEOR = 28; // [(base.v1.ts_enum_desc) = "Bitwise Or"];
+  NBITWISEOR = 29; // [(base.v1.ts_enum_desc) = "Not Bitwise Or"];
+}
+
+enum OrderDirection {
+  ASC = 0; // [(base.v1.ts_enum_desc) = "Ascending"];
+  DESC = 1; // [(base.v1.ts_enum_desc) = "Descending"];
+}
+
+message OrderBy {
+  string field = 1;
+  OrderDirection direction = 2;
+}
+
+message Pagination {
+  int32 skip = 1;
+  int32 take = 2;
+}
+
+message ListResponse {
+  repeated google.protobuf.Any items = 1;
+  PaginationResponse pagination = 2;
+}
+
+message PaginationResponse {
+  int32 page = 1;
+  int32 total = 2;
+}
+
+message BulkUpdateStatusResponse {
+  int32 rowsAffected = 1;
+}

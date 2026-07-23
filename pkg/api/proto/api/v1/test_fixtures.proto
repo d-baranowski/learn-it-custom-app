@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+package api.v1;
+
+import "request/v1/base.proto";
+import "api/v1/permissions.proto";
+import "api/v1/generators.proto";
+
+option go_package = "pkg/api/gen/api/v1;apiv1";
+
+// Do not alter these types, they are used for testing purposes
+
+service TestService {
+  rpc Get(request.v1.GetRequest) returns (TestModel);
+  rpc List(request.v1.SelectRequest) returns (TestListResponse);
+  rpc Create(SaveTestModelRequest) returns (TestModel);
+  rpc Update(SaveTestModelRequest) returns (TestModel);
+  rpc SoftDelete(request.v1.SoftDeleteRequest) returns (request.v1.SoftDeleteResponse);
+  rpc Delete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+}
+
+message TestModel {
+  string ID = 1;
+  string name = 2;
+  int32 age = 3;
+  int32 height = 4;
+  TestEnum enumField = 5;
+  TestJsonBField jsonbField = 6;
+  int32 foo = 7;
+  bool bar = 8;
+  int32 noUpdate = 9;
+  string testID = 10;
+  string testLabel = 11;
+  string testGroupID = 12;
+  int64 timeOnly = 14 [(ts_grid_opts) = {
+    column: {
+      columnRendererType: "time"
+    }
+  }];
+
+  int64 createdAt = 100;
+  string createdBy = 101;
+  optional int64 updatedAt = 102;
+  optional string updatedBy = 103;
+  optional int64 deletedAt = 104;
+  optional string deletedBy = 105;
+}
+
+message TestListResponse {
+  repeated TestModel items = 1;
+  request.v1.PaginationResponse pagination = 2;
+}
+
+message SaveTestModelRequest {
+  string ID = 1;
+  string name = 2;
+  int32 age = 3;
+  int32 height = 4;
+  TestEnum enumField = 5;
+  TestJsonBField jsonbField = 6;
+  int32 noUpdate = 7 [(ts_update_disabled) = true];
+  string testID = 8;
+  string testGroupID = 9;
+}
+
+enum TestEnum {
+  TE_UNSPECIFIED = 0;
+  TE_FIRST = 1 [(ts_enum_desc) = "Third"];
+  TE_SECOND = 2 [(ts_enum_desc) = "Second"];
+  TE_THIRD = 3 [(ts_enum_desc) = "First"];
+}
+
+message TestJsonBField {
+  string string = 1;
+  int32 int32 = 2;
+  bool bool = 3;
+}
+
+message TestValidatorMessage {
+  string ID = 1;
+  int32 mcc = 2;
+  int32 mnc = 3;
+}

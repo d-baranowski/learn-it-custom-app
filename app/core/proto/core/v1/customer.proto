@@ -1,0 +1,135 @@
+syntax = "proto3";
+
+package core.v1;
+
+import "request/v1/base.proto";
+import "api/v1/generators.proto";
+import "api/v1/permissions.proto";
+import "buf/validate/validate.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "app/core/gen/core/v1;corev1";
+
+service CustomerService {
+  option (api.v1.permissionKey) = "Customer";
+
+  rpc Autocomplete(request.v1.AutocompleteRequest) returns (request.v1.AutocompleteResponse);
+  rpc Create(SaveCustomerRequest) returns (Customer) {}
+  rpc Get(request.v1.GetRequest) returns (Customer) {}
+  rpc List(request.v1.SelectRequest) returns (ListCustomerResponse) {}
+  rpc Update(SaveCustomerRequest) returns (Customer) {}
+  rpc SoftDelete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+  rpc Delete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+}
+
+message Customer {
+  option (api.v1.ts_grid) = true;
+
+  string id = 1[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  optional string userId = 2[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    },
+    filter: {
+      form: true,
+      formLabel: "User",
+    }
+  }];
+  optional string userLabel = 21[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "User",
+      visible: false,
+    }
+  }];
+  optional string displayAbbreviation = 23[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  optional string firstName = 8[(api.v1.ts_grid_opts) = {
+    filter: {
+      quick: true,
+    }
+  }];
+  optional string lastName = 9[(api.v1.ts_grid_opts) = {
+    filter: {
+      quick: true,
+    }
+  }];
+  optional string address = 3[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    },
+    filter: {
+      quick: true,
+    }
+  }];
+  optional string email = 4[(api.v1.ts_grid_opts) = {
+    filter: {
+      quick: true,
+    }
+  }];
+  optional string phoneNumber = 5[(api.v1.ts_grid_opts) = {
+    filter: {
+      quick: true,
+    }
+  }];
+  optional string notes = 6[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  optional string languageId = 7[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    },
+    filter: {
+      form: true,
+      formLabel: "Language",
+    }
+  }];
+  optional string languageLabel = 22[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Language",
+      visible: false,
+    }
+  }];
+  optional string therapistLabels = 24[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Therapists",
+      visible: true,
+    }
+  }];
+
+  int64 createdAt = 100;
+  string createdBy = 101;
+  optional string createdByLabel = 102;
+  optional int64 updatedAt = 103;
+  optional string updatedBy = 104;
+  optional string updatedByLabel = 105;
+  optional int64 deletedAt = 106;
+  optional string deletedBy = 107;
+  optional string deletedByLabel = 108;
+}
+
+message SaveCustomerRequest {
+  string id = 1;
+  optional string userId = 2;
+  optional string displayAbbreviation = 23;
+  string firstName = 8[(buf.validate.field).string.min_len = 1];
+  string lastName = 9[(buf.validate.field).string.min_len = 1];
+  optional string address = 3;
+  optional string email = 4[(buf.validate.field).string.email = true];
+  optional string phoneNumber = 5[(buf.validate.field).string.pattern = "^\\+[\\d\\s\\-()]{7,18}$"];
+  optional string notes = 6;
+  optional string languageId = 7;
+}
+
+message ListCustomerResponse {
+  repeated Customer items = 1;
+  request.v1.PaginationResponse pagination = 2;
+}

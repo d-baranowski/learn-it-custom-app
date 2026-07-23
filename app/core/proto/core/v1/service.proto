@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package core.v1;
+
+import "request/v1/base.proto";
+import "api/v1/generators.proto";
+import "api/v1/permissions.proto";
+import "buf/validate/validate.proto";
+import "google/protobuf/empty.proto";
+import "core/v1/translated_string.proto";
+
+option go_package = "app/core/gen/core/v1;corev1";
+
+service ServiceService {
+  option (api.v1.permissionKey) = "Service";
+
+  rpc Autocomplete(request.v1.AutocompleteRequest) returns (request.v1.AutocompleteResponse);
+  rpc Create(SaveServiceRequest) returns (Service) {}
+  rpc Get(request.v1.GetRequest) returns (Service) {}
+  rpc List(request.v1.SelectRequest) returns (ListServiceResponse) {}
+  rpc Update(SaveServiceRequest) returns (Service) {}
+  rpc SoftDelete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+  rpc Delete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+}
+
+message Service {
+  option (api.v1.ts_grid) = true;
+
+  string id = 1[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  TranslatedString name = 2[(api.v1.ts_grid_opts) = {
+    filter: {
+      quick: true,
+    }
+  }];
+  TranslatedString description = 3;
+  optional float defaultPrice = 4;
+  optional string backdropPhoto = 5;
+  optional string heroPhoto = 6;
+  optional string displayAbbreviation = 7;
+
+  int64 createdAt = 100;
+  string createdBy = 101;
+  optional string createdByLabel = 102;
+  optional int64 updatedAt = 103;
+  optional string updatedBy = 104;
+  optional string updatedByLabel = 105;
+  optional int64 deletedAt = 106;
+  optional string deletedBy = 107;
+  optional string deletedByLabel = 108;
+}
+
+message SaveServiceRequest {
+  string id = 1;
+  TranslatedString name = 2;
+  TranslatedString description = 3;
+  optional float defaultPrice = 4;
+  optional string backdropPhoto = 5;
+  optional string heroPhoto = 6;
+  optional string displayAbbreviation = 7;
+}
+
+message ListServiceResponse {
+  repeated Service items = 1;
+  request.v1.PaginationResponse pagination = 2;
+}

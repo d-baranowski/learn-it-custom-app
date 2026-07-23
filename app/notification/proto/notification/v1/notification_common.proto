@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package notification.v1;
+
+import "api/v1/generators.proto";
+import "buf/validate/validate.proto";
+
+option go_package = "app/notification/gen/notification/v1;notificationv1";
+
+enum NotificationDeliveryMechanism {
+  NOTIFICATION_DELIVERY_MECHANISM_UNSPECIFIED = 0;
+  NOTIFICATION_DELIVERY_MECHANISM_EMAIL = 1 [(api.v1.ts_enum_desc) = "Email"];
+  NOTIFICATION_DELIVERY_MECHANISM_SMS = 2 [(api.v1.ts_enum_desc) = "SMS"];
+}
+
+enum NotificationStatus {
+  NOTIFICATION_STATUS_UNSPECIFIED = 0;
+  NOTIFICATION_STATUS_CREATED = 1 [(api.v1.ts_enum_desc) = "Created"];
+  NOTIFICATION_STATUS_SENT = 2 [(api.v1.ts_enum_desc) = "Sent"];
+  NOTIFICATION_STATUS_FAILED = 3 [(api.v1.ts_enum_desc) = "Failed"];
+  NOTIFICATION_STATUS_WAITING = 4 [(api.v1.ts_enum_desc) = "Waiting"];
+}
+
+enum NotificationPayloadFieldType {
+  NOTIFICATION_PAYLOAD_FIELD_TYPE_UNSPECIFIED = 0;
+  NOTIFICATION_PAYLOAD_FIELD_TYPE_STRING = 1 [(api.v1.ts_enum_desc) = "String"];
+  NOTIFICATION_PAYLOAD_FIELD_TYPE_NUMBER = 2 [(api.v1.ts_enum_desc) = "Number"];
+  NOTIFICATION_PAYLOAD_FIELD_TYPE_BOOLEAN = 3 [(api.v1.ts_enum_desc) = "Boolean"];
+  NOTIFICATION_PAYLOAD_FIELD_TYPE_DATE = 4 [(api.v1.ts_enum_desc) = "Date"];
+  NOTIFICATION_PAYLOAD_FIELD_TYPE_DATETIME = 5 [(api.v1.ts_enum_desc) = "Date Time"];
+  NOTIFICATION_PAYLOAD_FIELD_TYPE_JSON = 6 [(api.v1.ts_enum_desc) = "JSON"];
+  NOTIFICATION_PAYLOAD_FIELD_TYPE_ARRAY = 7 [(api.v1.ts_enum_desc) = "Array"];
+}
+
+message NotificationTemplateVariant {
+  string languageCode = 1[(buf.validate.field).string.min_len = 1];
+  NotificationDeliveryMechanism deliveryMechanism = 2;
+  optional string subject = 3;
+  string body = 4[(buf.validate.field).string.min_len = 1];
+}
+
+message NotificationPayloadField {
+  string path = 1[(buf.validate.field).string.min_len = 1];
+  NotificationPayloadFieldType type = 2;
+  bool required = 3;
+  optional string description = 4;
+}
+
+enum NotificationDeliveryStatus {
+  NOTIFICATION_DELIVERY_STATUS_UNKNOWN = 0;
+  NOTIFICATION_DELIVERY_STATUS_DELIVERED = 1 [(api.v1.ts_enum_desc) = "Delivered"];
+  NOTIFICATION_DELIVERY_STATUS_BOUNCED = 2 [(api.v1.ts_enum_desc) = "Bounced"];
+  NOTIFICATION_DELIVERY_STATUS_COMPLAINED = 3 [(api.v1.ts_enum_desc) = "Complained"];
+  NOTIFICATION_DELIVERY_STATUS_DELAYED = 4 [(api.v1.ts_enum_desc) = "Delayed"];
+  NOTIFICATION_DELIVERY_STATUS_FAILED = 5 [(api.v1.ts_enum_desc) = "Failed"];
+}

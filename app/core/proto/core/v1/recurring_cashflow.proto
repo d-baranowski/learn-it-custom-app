@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+package core.v1;
+
+import "request/v1/base.proto";
+import "api/v1/generators.proto";
+import "api/v1/permissions.proto";
+import "core/v1/enums.proto";
+import "buf/validate/validate.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "app/core/gen/core/v1;corev1";
+
+service RecurringCashflowService {
+  option (api.v1.permissionKey) = "RecurringCashflow";
+
+  rpc Autocomplete(request.v1.AutocompleteRequest) returns (request.v1.AutocompleteResponse);
+  rpc Create(SaveRecurringCashflowRequest) returns (RecurringCashflow) {}
+  rpc Get(request.v1.GetRequest) returns (RecurringCashflow) {}
+  rpc List(request.v1.SelectRequest) returns (ListRecurringCashflowResponse) {}
+  rpc Update(SaveRecurringCashflowRequest) returns (RecurringCashflow) {}
+  rpc SoftDelete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+  rpc Delete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+}
+
+message RecurringCashflow {
+  option (api.v1.ts_grid) = true;
+
+  string id = 1[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  string displayName = 2[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Name",
+      visible: true,
+    },
+    filter: {
+      quick: true,
+    }
+  }];
+  string amount = 3[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Amount",
+      visible: true,
+    }
+  }];
+  int64 startDate = 4[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Start Date",
+      visible: true,
+    }
+  }];
+  optional int64 endDate = 5[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "End Date",
+      visible: true,
+    }
+  }];
+  repeated RecurringCashflowFrequencyEntry frequency = 6[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    },
+    filter: {
+      form: false,
+      quick: false,
+    }
+  }];
+
+  int64 createdAt = 100;
+  string createdBy = 101;
+  optional string createdByLabel = 102;
+  optional int64 updatedAt = 103;
+  optional string updatedBy = 104;
+  optional string updatedByLabel = 105;
+  optional int64 deletedAt = 106;
+  optional string deletedBy = 107;
+  optional string deletedByLabel = 108;
+}
+
+message SaveRecurringCashflowRequest {
+  string id = 1;
+  string displayName = 2[(buf.validate.field).string.min_len = 1];
+  string amount = 3[(buf.validate.field).string.min_len = 1];
+  int64 startDate = 4[(buf.validate.field).int64.gt = 0];
+  optional int64 endDate = 5;
+  repeated RecurringCashflowFrequencyEntry frequency = 6;
+}
+
+message ListRecurringCashflowResponse {
+  repeated RecurringCashflow items = 1;
+  request.v1.PaginationResponse pagination = 2;
+}
+
+message RecurringCashflowFrequencyEntry {
+  int32 every = 1;
+  repeated common.v1.DayOfWeek onDay = 2;
+  // Milliseconds from midnight (00:00) for when the cashflow should start.
+  // Example: 9:30 → 34200000.
+  optional int64 startTimeMs = 3;
+  // Unit of time for frequency (week or month). Defaults to WEEK for backward compatibility.
+  common.v1.FrequencyUnit unit = 4;
+}

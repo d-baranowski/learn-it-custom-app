@@ -1,0 +1,133 @@
+syntax = "proto3";
+
+package core.v1;
+
+import "api/v1/permissions.proto";
+import "buf/validate/validate.proto";
+import "core/v1/session.proto";
+
+option go_package = "app/core/gen/core/v1;corev1";
+
+service CalendarService {
+  rpc GetTherapistCalendarEvents(GetTherapistCalendarEventsRequest) returns (GetTherapistCalendarEventsResponse) {
+    option (api.v1.permissionAllowAll) = true;
+  }
+  rpc GetRoomCalendarEvents(GetRoomCalendarEventsRequest) returns (GetRoomCalendarEventsResponse) {
+    option (api.v1.permissionAllowAll) = true;
+  }
+  rpc GetTherapistSessionCounts(GetTherapistSessionCountsRequest) returns (GetSessionCountsResponse) {
+    option (api.v1.permissionAllowAll) = true;
+  }
+  rpc GetRoomSessionCounts(GetRoomSessionCountsRequest) returns (GetSessionCountsResponse) {
+    option (api.v1.permissionAllowAll) = true;
+  }
+  rpc UpdateEvent(UpdateEventRequest) returns (UpdateEventResponse) {
+    option (api.v1.permissionAllowAll) = true;
+  }
+}
+
+message GetTherapistCalendarEventsRequest {
+  int64 startDate = 1 [(buf.validate.field).int64.gt = 0];
+  int64 endDate = 2;
+  repeated string therapistIds = 3;
+  repeated string serviceIds = 4;
+}
+
+message GetTherapistCalendarEventsResponse {
+  repeated CalendarEvent events = 1;
+  repeated ResourceMap resourceMap = 2;
+}
+
+message CalendarEvent {
+  string id = 1;
+  string title = 2;
+  int64 start = 3;
+  int64 end = 4;
+  string resourceId = 5;
+  optional int64 paidAt = 6;
+  optional SessionPaymentType paymentType = 7;
+  optional int64 cancelledAt = 8;
+  optional string cancellationReason = 9;
+  optional string displayAbbreviation = 10;
+  optional string displayColor = 11;
+  optional string displayName = 12;
+  optional string roomId = 13;
+  optional bool isOnline = 14;
+}
+
+message ResourceMap {
+  string resourceId = 1;
+  string resourceTitle = 2;
+  repeated AvailabilitySlot availabilitySlots = 3;
+  repeated AbsenceSlot absenceSlots = 4;
+  optional string displayAbbreviation = 5;
+  optional string displayColor = 6;
+}
+
+message AvailabilitySlot {
+  string id = 1;
+  int32 dayOfWeek = 2;
+  string fromTime = 3;
+  string tillTime = 4;
+}
+
+message AbsenceSlot {
+  string id = 1;
+  int64 fromTime = 2;
+  int64 tillTime = 3;
+  optional string reason = 4;
+}
+
+message GetRoomCalendarEventsRequest {
+  int64 startDate = 1 [(buf.validate.field).int64.gt = 0];
+  int64 endDate = 2;
+  repeated string roomIds = 3;
+}
+
+message GetRoomCalendarEventsResponse {
+  repeated CalendarEvent events = 1;
+  repeated RoomResourceMap resourceMap = 2;
+}
+
+message RoomResourceMap {
+  string resourceId = 1;
+  string resourceTitle = 2;
+  optional string displayAbbreviation = 3;
+  optional string displayColor = 4;
+}
+
+message GetTherapistSessionCountsRequest {
+  int64 startDate = 1 [(buf.validate.field).int64.gt = 0];
+  int64 endDate = 2;
+  repeated string therapistIds = 3;
+  repeated string serviceIds = 4;
+}
+
+message GetRoomSessionCountsRequest {
+  int64 startDate = 1 [(buf.validate.field).int64.gt = 0];
+  int64 endDate = 2;
+  repeated string roomIds = 3;
+}
+
+// A single day's session count. date is an ISO calendar day (YYYY-MM-DD).
+message SessionDayCount {
+  string date = 1;
+  int32 count = 2;
+}
+
+message GetSessionCountsResponse {
+  repeated SessionDayCount counts = 1;
+}
+
+message UpdateEventRequest {
+  string eventId = 1 [(buf.validate.field).string.min_len = 1];
+  optional int64 start = 2 [(buf.validate.field).int64.gt = 0];
+  optional int64 end = 3 [(buf.validate.field).int64.gt = 0];
+  optional string resourceId = 4 [(buf.validate.field).string.min_len = 1];
+  string resourceType = 5 [(buf.validate.field).string = {
+    in: ["therapist", "room"]
+  }];
+}
+
+message UpdateEventResponse {
+}

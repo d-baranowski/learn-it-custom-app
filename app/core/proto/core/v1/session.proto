@@ -1,0 +1,351 @@
+syntax = "proto3";
+
+package core.v1;
+
+import "request/v1/base.proto";
+import "api/v1/generators.proto";
+import "api/v1/permissions.proto";
+import "buf/validate/validate.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "app/core/gen/core/v1;corev1";
+
+service SessionService {
+  option (api.v1.permissionKey) = "Session";
+
+  rpc Autocomplete(request.v1.AutocompleteRequest) returns (request.v1.AutocompleteResponse);
+  rpc Create(SaveSessionRequest) returns (Session) {}
+  rpc Get(request.v1.GetRequest) returns (Session) {}
+  rpc List(request.v1.SelectRequest) returns (ListSessionResponse) {}
+  rpc Update(SaveSessionRequest) returns (Session) {}
+  rpc SoftDelete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+  rpc Delete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+  rpc AddPaymentLink(AddPaymentLinkRequest) returns (Session) {}
+  // Returns the next upcoming session using timezone-aware date/time comparison.
+  rpc GetNextSession(GetNextSessionRequest) returns (GetNextSessionResponse) {}
+
+  // Fetch sessions matching therapy IDs and date range for a price update preview.
+  rpc GetSessionsForPriceUpdate(GetSessionsForPriceUpdateRequest) returns (GetSessionsForPriceUpdateResponse) {}
+  // Bulk-update the price of the given sessions.
+  rpc BulkUpdateSessionPrice(BulkUpdateSessionPriceRequest) returns (BulkUpdateSessionPriceResponse) {}
+}
+
+enum SessionCancellationActor {
+  SESSION_CANCELLATION_ACTOR_UNSPECIFIED = 0;
+  SESSION_CANCELLATION_ACTOR_CUSTOMER = 1 [(api.v1.ts_enum_desc) = "Customer"];
+  SESSION_CANCELLATION_ACTOR_THERAPIST = 2 [(api.v1.ts_enum_desc) = "Therapist"];
+  SESSION_CANCELLATION_ACTOR_OTHER = 3 [(api.v1.ts_enum_desc) = "Other"];
+}
+
+enum SessionPaymentType {
+  SESSION_PAYMENT_TYPE_UNSPECIFIED = 0;
+  SESSION_PAYMENT_TYPE_CASH = 1 [(api.v1.ts_enum_desc) = "Cash"];
+  SESSION_PAYMENT_TYPE_BANK_TRANSFER = 2 [(api.v1.ts_enum_desc) = "Bank Transfer"];
+  SESSION_PAYMENT_TYPE_PAYMENT_LINK = 3 [(api.v1.ts_enum_desc) = "Payment Link"];
+  SESSION_PAYMENT_TYPE_CARD = 4 [(api.v1.ts_enum_desc) = "Card"];
+  SESSION_PAYMENT_TYPE_INSURANCE = 5 [(api.v1.ts_enum_desc) = "Insurance"];
+}
+
+message Session {
+  option (api.v1.ts_grid) = true;
+
+  string id = 1[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  optional string therapyId = 2[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    },
+    filter: {
+      form: true,
+      formLabel: "Therapy",
+    }
+  }];
+  optional string therapyLabel = 3[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Therapy",
+      visible: true,
+    }
+  }];
+  string therapistId = 4[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    },
+    filter: {
+      form: true,
+      formLabel: "Therapist",
+    }
+  }];
+  optional string therapistLabel = 5[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Therapist",
+      visible: true,
+    }
+  }];
+  optional string therapistAbbreviationLabel = 6[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  optional string roomId = 7[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    },
+    filter: {
+      form: true,
+      formLabel: "Room",
+    }
+  }];
+  optional string roomLabel = 8[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Room",
+      visible: true,
+      columnRendererType: "roomOrOnline",
+    }
+  }];
+  // Session date in YYYY-MM-DD format.
+  string date = 9[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Date",
+      visible: true,
+    },
+    filter: {
+      quick: true,
+      quickLabel: "Date",
+      type: "date"
+    }
+  }];
+  // Session start time in HH:MM format (24h).
+  string startTime = 10[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Start",
+      visible: true,
+    }
+  }];
+  // Session end time in HH:MM format (24h).
+  string endTime = 21[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "End",
+      visible: true,
+    }
+  }];
+  // IANA timezone identifier (e.g. "Europe/Warsaw").
+  string timezone = 22[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  string price = 11[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Price",
+      visible: true,
+    },
+    filter: {
+      type: "number",
+    }
+  }];
+  optional int64 paidAt = 12[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    },
+    filter: {
+      type: "date",
+    }
+  }];
+  optional SessionPaymentType paymentType = 13[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+      columnRendererType: "enum",
+    }
+  }];
+  optional string paymentLinkId = 23[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  optional string paymentLink = 19[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  optional string paymentStatus = 20[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  optional int64 cancelledAt = 14[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    },
+    filter: {
+      type: "date",
+    }
+  }];
+  optional string cancellationReason = 15[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  repeated string customerIds = 16[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    },
+    filter: {
+      form: true,
+      quick: true,
+      formLabel: "Customers",
+      quickLabel: "Customers",
+    }
+  }];
+  optional string customerLabels = 25[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Customers",
+      visible: true,
+    },
+    filter: {
+      form: false,
+      quick: true,
+      quickLabel: "Customers",
+    }
+  }];
+  optional string therapySessionFrequencyRef = 17[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    },
+    filter: {
+      form: false,
+      quick: false,
+    }
+  }];
+  optional bool is_online = 18[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Online",
+      visible: false,
+    }
+  }];
+  optional string displayName = 24[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Display Name",
+      visible: true,
+    }
+  }];
+  optional SessionCancellationActor cancellationActor = 26[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+      columnRendererType: "enum",
+    }
+  }];
+  // User who clicked Cancel — stamped server-side from the request context.
+  optional string cancelledByUserId = 27[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+      header: "Cancelled By User Id",
+    }
+  }];
+  optional string cancelledByUserLabel = 28[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+
+  int64 createdAt = 100;
+  string createdBy = 101;
+  optional string createdByLabel = 102;
+  optional int64 updatedAt = 103;
+  optional string updatedBy = 104;
+  optional string updatedByLabel = 105;
+  optional int64 deletedAt = 106;
+  optional string deletedBy = 107;
+  optional string deletedByLabel = 108;
+}
+
+message SaveSessionRequest {
+  string id = 1;
+  optional string therapyId = 2;
+  string therapistId = 3[(buf.validate.field).string.min_len = 1];
+  optional string roomId = 4;
+  // Session date in YYYY-MM-DD format.
+  string date = 5[(buf.validate.field).string.min_len = 10];
+  // Session start time in HH:MM format (24h).
+  string startTime = 6[(buf.validate.field).string.min_len = 5];
+  string price = 7[(buf.validate.field).string.min_len = 1];
+  optional int64 paidAt = 8;
+  optional SessionPaymentType paymentType = 9;
+  optional int64 cancelledAt = 10;
+  optional string cancellationReason = 11;
+  repeated string customerIds = 12;
+  optional string therapySessionFrequencyRef = 13;
+  optional bool is_online = 14;
+  // Session end time in HH:MM format (24h).
+  string endTime = 15[(buf.validate.field).string.min_len = 5];
+  // IANA timezone identifier (e.g. "Europe/Warsaw").
+  string timezone = 16[(buf.validate.field).string.min_len = 1];
+  optional string displayName = 17;
+  optional SessionCancellationActor cancellationActor = 18;
+  // Server-authoritative: stamped from the request context by the cancellation
+  // pre-hooks. Present on the request only so the generic UpdateMethod persists
+  // it (columns absent from the request proto are excluded from UPDATE). Any
+  // client-supplied value is always overwritten server-side.
+  optional string cancelledByUserId = 19;
+}
+
+message AddPaymentLinkRequest {
+  string sessionId = 1[(buf.validate.field).string.min_len = 1];
+}
+
+message GetNextSessionRequest {}
+
+message GetNextSessionResponse {
+  optional Session session = 1;
+}
+
+message ListSessionResponse {
+  repeated Session items = 1;
+  request.v1.PaginationResponse pagination = 2;
+}
+
+// Request to fetch sessions for a price update preview.
+message GetSessionsForPriceUpdateRequest {
+  // One or more therapy IDs whose sessions should be fetched.
+  repeated string therapyIds = 1[(buf.validate.field).repeated.min_items = 1];
+  // Start of date range (YYYY-MM-DD, inclusive). If empty, no lower bound is applied.
+  string dateFrom = 2;
+  // End of date range (YYYY-MM-DD, inclusive). If empty, no upper bound is applied.
+  string dateUntil = 3;
+}
+
+// A single session row returned for the price update preview.
+message SessionPriceUpdatePreview {
+  string id = 1;
+  string date = 2;
+  string startTime = 3;
+  string endTime = 4;
+  string price = 5;
+  optional string therapyLabel = 6;
+  optional string therapistLabel = 7;
+  optional string roomLabel = 8;
+  optional bool isOnline = 9;
+  // The therapy's configured session price (for comparison / auto-population).
+  optional string therapyPrice = 10;
+}
+
+// Response containing sessions available for price update.
+message GetSessionsForPriceUpdateResponse {
+  repeated SessionPriceUpdatePreview sessions = 1;
+  int32 count = 2;
+}
+
+// Request to bulk-update the price of specific sessions.
+message BulkUpdateSessionPriceRequest {
+  // IDs of sessions to update.
+  repeated string sessionIds = 1[(buf.validate.field).repeated.min_items = 1];
+  // New price value as decimal string (e.g. "150.00").
+  string price = 2[(buf.validate.field).string.min_len = 1];
+}
+
+// Response after bulk-updating session prices.
+message BulkUpdateSessionPriceResponse {
+  int32 updatedCount = 1;
+}

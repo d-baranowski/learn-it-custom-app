@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package notification.v1;
+
+import "api/v1/generators.proto";
+import "api/v1/permissions.proto";
+import "buf/validate/validate.proto";
+import "google/protobuf/empty.proto";
+import "notification/v1/notification_common.proto";
+
+option go_package = "app/notification/gen/notification/v1;notificationv1";
+
+service NotificationPreferenceService {
+  option (api.v1.permissionKey) = "NotificationPreference";
+
+  rpc ListMyNotificationPreferences(google.protobuf.Empty) returns (ListMyNotificationPreferencesResponse) {
+    option (api.v1.permissionAbility) = "List";
+  }
+  rpc SaveMyNotificationPreferences(SaveMyNotificationPreferencesRequest) returns (SaveMyNotificationPreferencesResponse) {
+    option (api.v1.permissionAbility) = "Update";
+  }
+}
+
+message MyNotificationPreference {
+  string eventTypeKey = 1;
+  string eventTypeLabel = 2;
+  optional string eventTypeDescription = 3;
+  repeated NotificationDeliveryMechanism deliveryMechanisms = 4;
+}
+
+message SaveMyNotificationPreferenceItem {
+  string eventTypeKey = 1[(buf.validate.field).string.min_len = 1];
+  repeated NotificationDeliveryMechanism deliveryMechanisms = 2;
+}
+
+message ListMyNotificationPreferencesResponse {
+  string languageCode = 1;
+  repeated MyNotificationPreference items = 2;
+  optional string phoneNumber = 3;
+  optional string email = 4[(buf.validate.field).string.email = true];
+}
+
+message SaveMyNotificationPreferencesRequest {
+  string languageCode = 1[(buf.validate.field).string.min_len = 1];
+  repeated SaveMyNotificationPreferenceItem items = 2;
+  optional string phoneNumber = 3;
+  optional string email = 4[(buf.validate.field).string.email = true];
+}
+
+message SaveMyNotificationPreferencesResponse {
+  string languageCode = 1;
+  optional string phoneNumber = 2;
+  optional string email = 3[(buf.validate.field).string.email = true];
+}

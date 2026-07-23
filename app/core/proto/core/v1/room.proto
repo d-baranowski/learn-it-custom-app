@@ -1,0 +1,120 @@
+syntax = "proto3";
+
+package core.v1;
+
+import "request/v1/base.proto";
+import "api/v1/generators.proto";
+import "api/v1/permissions.proto";
+import "buf/validate/validate.proto";
+import "google/protobuf/empty.proto";
+import "core/v1/translated_string.proto";
+
+option go_package = "app/core/gen/core/v1;corev1";
+
+service RoomService {
+  option (api.v1.permissionKey) = "Room";
+
+  rpc Autocomplete(request.v1.AutocompleteRequest) returns (request.v1.AutocompleteResponse);
+  rpc Create(SaveRoomRequest) returns (Room) {}
+  rpc Get(request.v1.GetRequest) returns (Room) {}
+  rpc List(request.v1.SelectRequest) returns (ListRoomResponse) {}
+  rpc Update(SaveRoomRequest) returns (Room) {}
+  rpc SoftDelete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+  rpc Delete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+  rpc FindAvailableRoom(FindAvailableRoomRequest) returns (FindAvailableRoomResponse) {}
+}
+
+message Room {
+  option (api.v1.ts_grid) = true;
+
+  string id = 1[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  string officeId = 2[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    },
+    filter: {
+      form: true,
+      formLabel: "Office",
+    }
+  }];
+  optional string officeLabel = 3;
+  TranslatedString displayName = 4[(api.v1.ts_grid_opts) = {
+    filter: {
+      quick: true,
+    }
+  }];
+  TranslatedString description = 5;
+  optional string displayAbbreviation = 6;
+  optional string displayColor = 7[(api.v1.ts_grid_opts) = {
+    column: {
+      columnRendererType: "color",
+      visible: true
+    },
+    filter: {
+      form: true,
+      formLabel: "Color",
+      type: "color"
+    }
+  }];
+  int64 createdAt = 100;
+  string createdBy = 101;
+  optional string createdByLabel = 102;
+  optional int64 updatedAt = 103;
+  optional string updatedBy = 104;
+  optional string updatedByLabel = 105;
+  optional int64 deletedAt = 106;
+  optional string deletedBy = 107;
+  optional string deletedByLabel = 108;
+}
+
+message SaveRoomRequest {
+  // Per-language requirements for the nested TranslatedString name. These are
+  // message-level (not field-level) so the expression can reach the subfield
+  // and still runs when displayName is unset. The rule id is the UI field path
+  // — the WASM validator surfaces it as the violation's field path so the form
+  // highlights the exact language tab. See tools/wasm/form-validator/main.go.
+  option (buf.validate.message).cel = {
+    id: "displayName.en"
+    message: "Name (English) is required"
+    expression: "has(this.displayName) && this.displayName.en != ''"
+  };
+  option (buf.validate.message).cel = {
+    id: "displayName.pl"
+    message: "Name (Polish) is required"
+    expression: "has(this.displayName) && this.displayName.pl != ''"
+  };
+
+  string id = 1;
+  string officeId = 2 [(buf.validate.field).cel = {
+    id: "SaveRoomRequest.officeId"
+    message: "Office is required"
+    expression: "this != ''"
+  }];
+  TranslatedString displayName = 3;
+  TranslatedString description = 4;
+  optional string displayAbbreviation = 5;
+  optional string displayColor = 6;
+}
+
+message FindAvailableRoomRequest {
+  // Session date in YYYY-MM-DD format.
+  string date = 1[(buf.validate.field).string.min_len = 10];
+  // Session start time in HH:MM format (24h).
+  string startTime = 2[(buf.validate.field).string.min_len = 5];
+  // Session end time in HH:MM format (24h).
+  string endTime = 3[(buf.validate.field).string.min_len = 5];
+}
+
+message FindAvailableRoomResponse {
+  optional string roomId = 1;
+  optional string roomLabel = 2;
+}
+
+message ListRoomResponse {
+  repeated Room items = 1;
+  request.v1.PaginationResponse pagination = 2;
+}

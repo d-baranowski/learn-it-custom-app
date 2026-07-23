@@ -1,0 +1,13 @@
+{
+  "name": "pgstore",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "targets": {
+    "tidy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "go mod tidy",
+        "cwd": "pkg/pgstore"
+      }
+    }
+  }
+}

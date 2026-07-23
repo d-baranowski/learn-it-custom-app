@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package notification.v1;
+
+import "request/v1/base.proto";
+import "api/v1/generators.proto";
+import "api/v1/permissions.proto";
+import "buf/validate/validate.proto";
+import "notification/v1/notification_common.proto";
+
+option go_package = "app/notification/gen/notification/v1;notificationv1";
+
+service NotificationTemplateService {
+  option (api.v1.permissionKey) = "NotificationTemplate";
+
+  rpc Autocomplete(request.v1.AutocompleteRequest) returns (request.v1.AutocompleteResponse);
+  rpc Create(SaveNotificationTemplateRequest) returns (NotificationTemplate) {}
+  rpc Get(request.v1.GetRequest) returns (NotificationTemplate) {}
+  rpc List(request.v1.SelectRequest) returns (ListNotificationTemplateResponse) {}
+  rpc Update(SaveNotificationTemplateRequest) returns (NotificationTemplate) {}
+  rpc SoftDelete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+  rpc Delete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+}
+
+message NotificationTemplate {
+  option (api.v1.ts_grid) = true;
+
+  string id = 1[(api.v1.ts_grid_opts) = { column: { visible: false } }];
+  string title = 2[(api.v1.ts_grid_opts) = {
+    column: { header: "Title", visible: true },
+    filter: { quick: true }
+  }];
+  string eventTypeKey = 3[(api.v1.ts_grid_opts) = {
+    column: { header: "Event Type", visible: true },
+    filter: { quick: true }
+  }];
+  optional string description = 4[(api.v1.ts_grid_opts) = { column: { visible: false } }];
+  bool active = 5[(api.v1.ts_grid_opts) = {
+    column: { header: "Active", visible: true, columnRendererType: "boolean" }
+  }];
+  repeated NotificationTemplateVariant variants = 6[(api.v1.ts_grid_opts) = { column: { visible: false } }];
+
+  int64 createdAt = 100;
+  string createdBy = 101;
+  optional int64 updatedAt = 102;
+  optional string updatedBy = 103;
+  optional int64 deletedAt = 104;
+  optional string deletedBy = 105;
+}
+
+message SaveNotificationTemplateRequest {
+  string id = 1;
+  string title = 2[(buf.validate.field).string.min_len = 1];
+  string eventTypeKey = 3[(buf.validate.field).string.min_len = 1];
+  optional string description = 4;
+  bool active = 5;
+  repeated NotificationTemplateVariant variants = 6;
+}
+
+message ListNotificationTemplateResponse {
+  repeated NotificationTemplate items = 1;
+  request.v1.PaginationResponse pagination = 2;
+}

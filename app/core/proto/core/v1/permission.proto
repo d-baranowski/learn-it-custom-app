@@ -1,0 +1,106 @@
+syntax = "proto3";
+
+package core.v1;
+
+import "request/v1/base.proto";
+import "api/v1/generators.proto";
+import "api/v1/permissions.proto";
+import "buf/validate/validate.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "app/core/gen/core/v1;corev1";
+
+// PermissionScope represents the scope of a permission
+enum PermissionScope {
+  // The scope is unspecified.
+  PERMISSION_SCOPE_UNSPECIFIED = 0;
+
+  // Own scope - user can only access resources they own
+  OWN = 1 [(api.v1.ts_enum_desc) = "Own"];
+
+  // All scope - user can access all resources
+  ALL = 2 [(api.v1.ts_enum_desc) = "All"];
+}
+
+service PermissionService {
+  option (api.v1.permissionKey) = "Permission";
+
+  rpc Get(request.v1.GetRequest) returns (Permission);
+  rpc List(request.v1.SelectRequest) returns (ListPermissionResponse);
+  rpc Create(SavePermissionRequest) returns (Permission);
+  rpc Update(SavePermissionRequest) returns (Permission);
+//  rpc SoftDelete(api.v1.DeleteRequest) returns (api.v1.DeleteResponse);
+  rpc Delete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+}
+
+message Permission {
+  option (api.v1.ts_grid) = true;
+
+  string id = 1;
+  optional string roleId = 2[(api.v1.ts_grid_opts) = {
+    filter: {
+      form: true,
+      formLabel: "Role",
+    }
+  }];
+  optional string roleLabel = 3;
+  optional string userId = 4[(api.v1.ts_grid_opts) = {
+    filter: {
+      form: true,
+      formLabel: "User",
+    }
+  }];
+  optional string userLabel = 5;
+  string key = 6;
+  repeated string abilities = 7;
+  PermissionScope scope = 8;
+  bool revoke = 9;
+
+  int64 createdAt = 100;
+  string createdBy = 101;
+  string createdByLabel = 102;
+  optional int64 updatedAt = 103;
+  optional string updatedBy = 104;
+  optional string updatedByLabel = 105;
+  optional int64 deletedAt = 106;
+  optional string deletedBy = 107;
+  optional string deletedByLabel = 108;
+}
+
+message ListPermissionResponse {
+  repeated Permission items = 1;
+  request.v1.PaginationResponse pagination = 2;
+}
+
+message SavePermissionRequest {
+  option (buf.validate.message).cel = {
+    id: "SavePermissionRequest.grant",
+    message: "Either a role or user must be set",
+    // Check that either roleID or userID is set
+    expression: "((this.roleId != '' && this.userId == '') || (this.roleId == '' && this.userId != ''))",
+  };
+
+  string id = 1;
+  optional string roleId = 2;
+  optional string userId = 3;
+  string key = 4 [
+    (buf.validate.field) = {required: true},
+    (buf.validate.field).cel = {
+      id: "SavePermissionRequest.key",
+      message: "Key must be set",
+      expression: "this != ''",
+    }
+  ];
+  repeated string abilities = 5;
+  PermissionScope scope = 6 [
+    (buf.validate.field) = {required: true},
+    (buf.validate.field).cel = {
+      id: "SavePermissionRequest.scope",
+      message: "Scope must be OWN or ALL",
+      expression: "this in [1, 2]",
+    }
+  ];
+  bool revoke = 7;
+}
+
+

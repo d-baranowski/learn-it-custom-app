@@ -1,0 +1,54 @@
+# CI-only override that swaps postgres for the pre-seeded image and turns
+# migrate/payment-migrate/bootstrap into no-ops. Applied alongside the base
+# docker-compose.yml: `docker compose -f docker-compose.yml -f docker-compose.seeded.yml up`.
+#
+# Set SEEDED_POSTGRES_IMAGE before invoking; build-seeded-image.sh emits the
+# tag and the Jenkinsfile exports the env var into the shard's shell.
+#
+# Local dev (./spin-up.sh / ./run-stack.sh) does NOT apply this override —
+# devs should keep seeing migration logs and the seed flow they iterate on.
+
+services:
+  postgres:
+    # Override the build directive so the seeded image is pulled directly.
+    # `image: !reset null` would clear it, but the simpler approach is to
+    # set image to the seeded tag and let compose ignore the inherited
+    # `build:` (compose prefers `image:` when both are present).
+    image: ${SEEDED_POSTGRES_IMAGE:?SEEDED_POSTGRES_IMAGE must be set when using docker-compose.seeded.yml}
+    build: !reset null
+    volumes:
+      # The seeded image carries /var/lib/postgresql/data inside its own
+      # filesystem. Mounting a named volume there would shadow the seed.
+      # Keep ONLY the initdb.d mount (it's a no-op anyway because data
+      # already exists, but the base compose declared it). Re-declare the
+      # log bind mount too — this list replaces the base postgres volumes,
+      # and the inherited command still writes to /var/log/utro.
+      - ./docker/postgres/initdb.d:/docker-entrypoint-initdb.d:ro
+      - ${E2E_LOG_DIR:-./cypress/logs}:/var/log/utro
+
+  migrate:
+    # Schema is already at the latest version inside the seeded image.
+    image: alpine:3.20
+    entrypoint: []
+    command: ["sh", "-c", "echo '[migrate] skipping — seeded image already migrated' && exit 0"]
+
+  payment-migrate:
+    image: alpine:3.20
+    entrypoint: []
+    command: ["sh", "-c", "echo '[payment-migrate] skipping — seeded image already migrated' && exit 0"]
+
+  notification-migrate:
+    image: alpine:3.20
+    entrypoint: []
+    command: ["sh", "-c", "echo '[notification-migrate] skipping — seeded image already migrated' && exit 0"]
+
+  core-event-migrate:
+    image: alpine:3.20
+    entrypoint: []
+    command: ["sh", "-c", "echo '[core-event-migrate] skipping — seeded image already migrated' && exit 0"]
+
+  bootstrap:
+    # Bootstrap seed data already loaded by build-seeded-image.sh.
+    image: alpine:3.20
+    entrypoint: []
+    command: ["sh", "-c", "echo '[bootstrap] skipping — seeded image already populated' && exit 0"]

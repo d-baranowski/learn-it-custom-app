@@ -1,0 +1,111 @@
+{
+  "groups": {
+    "Auth": {
+      "abilities": [
+        "AuthEnable",
+        "AuthDisable",
+        "AuthStatus",
+        "Authenticate",
+        "UserAdd",
+        "UserGet",
+        "UserList",
+        "UserDelete",
+        "UserChangePassword",
+        "UserGrantRole",
+        "UserRevokeRole",
+        "RoleAdd",
+        "RoleGet",
+        "RoleList",
+        "RoleDelete",
+        "RoleGrantPermission",
+        "RoleRevokePermission"
+      ]
+    },
+    "AuthService": {
+      "abilities": ["Login", "Logout", "GetUserByEmail"]
+    },
+    "Cluster": {
+      "abilities": ["MemberAdd", "MemberRemove", "MemberUpdate", "MemberList", "MemberPromote"]
+    },
+    "Config": {
+      "abilities": ["GetConfig", "SetConfig", "GetDefaultUiConfig", "SetDefaultUiConfig"]
+    },
+    "Department": {
+      "abilities": ["Autocomplete", "Create", "Get", "List", "Update", "SoftDelete", "Delete"]
+    },
+    "Employee": {
+      "abilities": ["Autocomplete", "Create", "Get", "List", "Update", "SoftDelete", "Delete"]
+    },
+    "EmployeeImage": {
+      "abilities": ["Get", "List", "Create", "Update", "SoftDelete", "Delete"]
+    },
+    "Factory": {
+      "abilities": ["Autocomplete", "Create", "Get", "List", "Update"]
+    },
+    "Health": {
+      "abilities": ["Check", "Watch"]
+    },
+    "KV": {
+      "abilities": ["Range", "Put", "DeleteRange", "Txn", "Compact"]
+    },
+    "Lease": {
+      "abilities": ["LeaseGrant", "LeaseRevoke", "LeaseKeepAlive", "LeaseTimeToLive", "LeaseLeases"]
+    },
+    "Maintenance": {
+      "abilities": [
+        "Alarm",
+        "Status",
+        "Defragment",
+        "Hash",
+        "HashKV",
+        "Snapshot",
+        "MoveLeader",
+        "Downgrade"
+      ]
+    },
+    "Me": {
+      "abilities": ["Get", "CheckPermission", "GetPermissions", "Update", "UpdateAvatar"]
+    },
+    "MetricsService": {
+      "abilities": ["Export"]
+    },
+    "Permission": {
+      "abilities": ["Get", "List", "Create", "Update", "SoftDelete", "Delete"]
+    },
+    "Position": {
+      "abilities": ["Autocomplete", "Create", "Get", "List", "Update", "SoftDelete", "Delete"]
+    },
+    "Role": {
+      "abilities": ["Autocomplete", "Get", "List", "Create", "Update", "SoftDelete", "Delete"]
+    },
+    "SessionService": {
+      "abilities": ["GetUserSession", "CreateUserSession", "UpdateUserSession", "DeleteUserSession"]
+    },
+    "Team": {
+      "abilities": ["Autocomplete", "Get", "List", "Create", "Update", "SoftDelete", "Delete"]
+    },
+    "TestService": {
+      "abilities": ["Get", "List", "Create", "Update", "SoftDelete", "Delete"]
+    },
+    "TraceService": {
+      "abilities": ["Export"]
+    },
+    "User": {
+      "abilities": [
+        "Autocomplete",
+        "Get",
+        "GetRoles",
+        "GetTeams",
+        "List",
+        "Create",
+        "Update",
+        "ResetUserPassword",
+        "SoftDelete",
+        "Delete"
+      ]
+    },
+    "Watch": {
+      "abilities": ["Watch"]
+    }
+  }
+}

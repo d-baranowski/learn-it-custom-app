@@ -1,0 +1,85 @@
+{
+  "root": true,
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:cypress/recommended"
+  ],
+  "plugins": ["@typescript-eslint", "cypress"],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module"
+  },
+  "env": {
+    "cypress/globals": true,
+    "node": true,
+    "jquery": true
+  },
+  "overrides": [
+    {
+      "files": ["*.ts", "*.js"],
+      "parser": "@typescript-eslint/parser",
+      "parserOptions": {
+        "ecmaVersion": 2022,
+        "sourceType": "module"
+      },
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "warn",
+        "@typescript-eslint/explicit-function-return-type": "off",
+        "@typescript-eslint/no-unused-vars": [
+          "error",
+          {
+            "argsIgnorePattern": "^_",
+            "varsIgnorePattern": "^_"
+          }
+        ],
+        "@typescript-eslint/no-unused-expressions": "off",
+        "cypress/no-unnecessary-waiting": "warn",
+        "cypress/unsafe-to-chain-command": "warn",
+        "cypress/no-assigning-return-values": "warn",
+        "no-console": "warn"
+      }
+    },
+    {
+      "files": ["scripts/**/*.ts"],
+      "rules": {
+        "no-console": "off"
+      }
+    },
+    {
+      "files": ["cypress/e2e/**/*.cy.ts"],
+      "rules": {
+        "no-restricted-syntax": [
+          "error",
+          {
+            "selector": "CallExpression[callee.object.name='cy'][callee.property.name='resetDatabase']",
+            "message": "Do not reset the DB in specs — the suite runs against a shared, accumulating DB. Make the test accumulation-safe (unique identifiers via cypress/utils/unique, scoped assertions) instead."
+          },
+          {
+            "selector": "Literal[value=/@(test|example)\\.com/]",
+            "message": "Do not hardcode test emails — use uniqueEmail() from cypress/utils/unique so the value is unique per run on the non-reset DB."
+          },
+          {
+            "selector": "TemplateElement[value.raw=/@(test|example)\\.com/]",
+            "message": "Do not hardcode test emails in templates — use uniqueEmail() from cypress/utils/unique."
+          },
+          {
+            "selector": "CallExpression[callee.property.name='should'][arguments.0.value='have.length'][arguments.1.type='Literal']",
+            "message": "Avoid asserting an exact global row count — the DB accumulates without a reset. Use 'have.length.gte' + scoped presence, or filter to a unique token first. If the count is genuinely fixed (empty range) or post-filter, add an eslint-disable-next-line with a reason."
+          }
+        ]
+      }
+    }
+  ],
+  "ignorePatterns": [
+    "node_modules/",
+    "dist/",
+    "*.config.js",
+    "*.config.ts",
+    "cypress/reports/",
+    "cypress/merged/",
+    "cypress/screenshots/",
+    "cypress/videos/"
+  ]
+}

@@ -1,0 +1,14 @@
+.breadcrumb ol {
+    display: flex;
+    list-style: none;
+    padding: 0;
+}
+.breadcrumb ol li {
+    white-space:nowrap;
+    overflow: hidden;
+}
+.breadcrumb ol li a {
+    text-decoration: none;
+    color: inherit;
+}
+

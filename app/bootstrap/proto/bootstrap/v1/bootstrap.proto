@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package bootstrap.v1;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "app/bootstrap/gen/bootstrap/v1;bootstrapv1";
+
+service BootstrapService {
+  rpc ResetDatabase(google.protobuf.Empty) returns (ResetDatabaseResponse) {}
+}
+
+message ResetDatabaseResponse {
+  bool success = 1;
+  string message = 2;
+}

@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package core.v1;
+
+import "request/v1/base.proto";
+import "api/v1/generators.proto";
+import "api/v1/permissions.proto";
+import "buf/validate/validate.proto";
+import "google/protobuf/empty.proto";
+import "core/v1/translated_string.proto";
+
+option go_package = "app/core/gen/core/v1;corev1";
+
+service OfficeService {
+  option (api.v1.permissionKey) = "Office";
+
+  rpc Autocomplete(request.v1.AutocompleteRequest) returns (request.v1.AutocompleteResponse);
+  rpc Create(SaveOfficeRequest) returns (Office) {}
+  rpc Get(request.v1.GetRequest) returns (Office) {}
+  rpc List(request.v1.SelectRequest) returns (ListOfficeResponse) {}
+  rpc Update(SaveOfficeRequest) returns (Office) {}
+  rpc SoftDelete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+  rpc Delete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+}
+
+message Office {
+  option (api.v1.ts_grid) = true;
+
+  string id = 1[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  TranslatedString displayName = 2[(api.v1.ts_grid_opts) = {
+    filter: {
+      quick: true,
+    }
+  }];
+  string address = 3;
+
+  int64 createdAt = 100;
+  string createdBy = 101;
+  optional string createdByLabel = 102;
+  optional int64 updatedAt = 103;
+  optional string updatedBy = 104;
+  optional string updatedByLabel = 105;
+  optional int64 deletedAt = 106;
+  optional string deletedBy = 107;
+  optional string deletedByLabel = 108;
+}
+
+message SaveOfficeRequest {
+  // Per-language requirements for the nested TranslatedString name. Message-level
+  // (not field-level) so the expression reaches the subfield and still runs when
+  // displayName is unset; the rule id is the UI field path the WASM validator
+  // surfaces so the form highlights the exact language tab.
+  option (buf.validate.message).cel = {
+    id: "displayName.en"
+    message: "Name (English) is required"
+    expression: "has(this.displayName) && this.displayName.en != ''"
+  };
+  option (buf.validate.message).cel = {
+    id: "displayName.pl"
+    message: "Name (Polish) is required"
+    expression: "has(this.displayName) && this.displayName.pl != ''"
+  };
+
+  string id = 1;
+  TranslatedString displayName = 2;
+  string address = 3 [(buf.validate.field).cel = {
+    id: "SaveOfficeRequest.address"
+    message: "Address is required"
+    expression: "this != ''"
+  }];
+}
+
+message ListOfficeResponse {
+  repeated Office items = 1;
+  request.v1.PaginationResponse pagination = 2;
+}

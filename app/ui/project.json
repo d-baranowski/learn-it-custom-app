@@ -1,0 +1,77 @@
+{
+  "name": "ui",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "ui/src",
+  "projectType": "library",
+  "targets": {
+    "deps": {
+      "cache": true,
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{projectRoot}",
+        "commands": ["pnpm install"],
+        "parallel": false
+      }
+    },
+
+    "generate": {
+      "cache": true,
+      "executor": "nx:run-commands",
+      "dependsOn": ["deps", {"target": "build", "projects": "form-validator"}],
+      "options": {
+        "cwd": "{projectRoot}",
+        "commands": [
+          "rm -rf gen",
+          "buf generate",
+          "buf generate --template buf.plugins.gen.yaml --include-imports",
+          "mkdir -p ./public/wasm/ && cp ../../tools/wasm/form-validator/dist/form-validator.wasm ./public/wasm/",
+          "cp ../../tools/wasm/form-validator/wasm_exec.js ./public/"
+        ],
+        "parallel": false
+      }
+    },
+
+    "container": {
+      "options": {
+        "context": "{projectRoot}",
+        "file": "app/ui/Dockerfile"
+      },
+      "configurations": {
+        "local": {
+          "push": false,
+          "load": true,
+          "platforms": []
+        },
+        "deploy": {
+          "push": true,
+          "load": false,
+          "platforms": ["linux/amd64", "linux/arm64"]
+        }
+      },
+      "defaultConfiguration": "deploy"
+    },
+
+    "test": {
+      "cache": true,
+      "executor": "nx:run-commands",
+      "dependsOn": ["generate"],
+      "outputs": ["{projectRoot}/coverage"],
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "pnpm jest --coverage --passWithNoTests"
+      }
+    },
+
+    "build": {
+      "cache": true,
+      "executor": "nx:run-commands",
+      "dependsOn": ["generate"],
+      "outputs": ["{projectRoot}/.next"],
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "pnpm exec next build"
+      }
+    }
+  },
+  "tags": []
+}

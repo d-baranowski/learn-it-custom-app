@@ -1,0 +1,42 @@
+{
+  "name": "utro-e2e-test",
+  "version": "1.0.0",
+  "description": "End-to-end tests for the Utro platform",
+  "private": true,
+  "scripts": {
+    "cy:open": "TZ=UTC cypress open",
+    "browser-test": "cypress run --spec 'cypress/e2e/**/*.cy.{js,ts}'",
+    "lint": "eslint . --ext .ts,.js && node scripts/check-spec-size.mjs && node scripts/check-test-ids.mjs",
+    "test": "node --import tsx --test 'scripts/**/*.test.ts'",
+    "lint:fix": "eslint . --ext .ts,.js --fix",
+    "e2e:tests": "tsx scripts/list-tests.ts",
+    "e2e:controller": "tsx scripts/e2e-controller.ts",
+    "format": "prettier --write \"**/*.{ts,js,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,js,json,md}\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cypress": "^15.10.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.7.0",
+    "typescript": "^5.5.4"
+  },
+  "devDependencies": {
+    "@cypress/grep": "6.0.0",
+    "@types/node": "^25.5.2",
+    "@typescript-eslint/eslint-plugin": "^8.56.1",
+    "@typescript-eslint/parser": "^8.56.1",
+    "cypress-mochawesome-reporter": "^4.0.2",
+    "cypress-multi-reporters": "2.0.5",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-cypress": "^3.6.0",
+    "eslint-plugin-prettier": "^5.5.5",
+    "mocha-junit-reporter": "2.2.1",
+    "mochawesome-merge": "^5.1.1",
+    "mochawesome-report-generator": "^6.3.2",
+    "prettier": "^3.8.1"
+  }
+}

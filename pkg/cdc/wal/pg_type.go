@@ -1,0 +1,26 @@
+package wal
+
+// PostgreSQL OIDs
+// https://github.com/postgres/postgres/blob/master/src/include/catalog/pg_type.dat
+const (
+	Int2OID = 21
+	Int4OID = 23
+	Int8OID = 20
+
+	TextOID      = 25
+	TextArrayOID = 1009
+	CharArrayOID = 1014
+	BpCharOID    = 1042
+	VarcharOID   = 1043
+
+	TimestampOID   = 1114
+	TimestamptzOID = 1184
+	DateOID        = 1082
+	TimeOID        = 1083
+
+	NumericOID = 1700
+
+	JSONBOID = 3802
+	UUIDOID  = 2950
+	BoolOID  = 16
+)

@@ -1,0 +1,60 @@
+version: v1
+managed:
+  enabled: true
+plugins:
+  - plugin: enums
+    path: ["pnpm", "exec", "tsx", "./plugins/enum.ts"]
+    opt:
+      - target=ts
+      - import_extension=none
+    out: gen
+    strategy: all
+  - plugin: grids
+    path: [ "pnpm", "exec", "tsx", "./plugins/grid.ts" ]
+    opt:
+      - target=ts
+      - import_extension=none
+    out: gen
+    strategy: all
+  - plugin: perms
+    path: ["pnpm", "exec", "tsx", "./plugins/permission.ts"]
+    opt:
+      - target=ts
+      - import_extension=none
+    out: gen
+    strategy: all
+  - plugin: permission-autocomplete
+    path: ["pnpm", "exec", "tsx", "./plugins/permission-autocomplete.ts"]
+    opt:
+      - target=ts
+      - import_extension=none
+    out: gen
+    strategy: all
+  - plugin: ability-autocomplete
+    path: ["pnpm", "exec", "tsx", "./plugins/ability-autocomplete.ts"]
+    opt:
+      - target=ts
+      - import_extension=none
+    out: gen
+    strategy: all
+  - plugin: factory
+    path: ["pnpm", "exec", "tsx", "./plugins/factory.ts"]
+    opt:
+      - target=ts
+      - import_extension=none
+    out: gen
+    strategy: all
+  - plugin: interfaces
+    path: ["pnpm", "exec", "tsx", "./plugins/interface.ts"]
+    opt:
+      - target=ts
+      - import_extension=none
+    out: gen
+    strategy: all
+  - plugin: typemap
+    path: ["pnpm", "exec", "tsx", "./plugins/typemap.ts"]
+    opt:
+      - target=ts
+      - import_extension=none
+    out: gen
+    strategy: all

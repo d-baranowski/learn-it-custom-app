@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package notification.dev.v1;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "app/notification/gen/notification/dev/v1;devv1";
+
+service DevService {
+  rpc ResetDatabase(google.protobuf.Empty) returns (NotificationResetDatabaseResponse) {}
+}
+
+message NotificationResetDatabaseResponse {
+  bool success = 1;
+  string message = 2;
+}

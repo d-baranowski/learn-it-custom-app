@@ -1,0 +1,86 @@
+{
+  "name": "e2e-test",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "tools/e2e-test/cypress",
+  "tags": ["scope:e2e"],
+  "targets": {
+    "deps": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{projectRoot}",
+        "commands": ["pnpm install"],
+        "parallel": false
+      }
+    },
+    "e2e": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["deps"],
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "TZ=UTC pnpm exec cypress run --spec 'cypress/e2e/**/*.cy.{js,ts}'"
+      }
+    },
+    "e2e-open": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["deps"],
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "TZ=UTC pnpm exec cypress open"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["deps"],
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "pnpm exec eslint . --ext .ts,.js && node scripts/check-spec-size.mjs && node scripts/check-test-ids.mjs"
+      }
+    },
+    "e2e-list": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "node scripts/list-specs.mjs"
+      }
+    },
+    "lint-fix": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["deps"],
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "pnpm exec eslint . --ext .ts,.js --fix"
+      }
+    },
+    "format:check": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["deps"],
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "pnpm exec prettier --check \"**/*.{ts,js,json,md}\""
+      }
+    },
+    "format:write": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["deps"],
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "pnpm exec prettier --write \"**/*.{ts,js,json,md}\""
+      }
+    },
+    "infra-up": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "docker compose up -d"
+      }
+    },
+    "infra-down": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "docker compose down"
+      }
+    }
+  }
+}

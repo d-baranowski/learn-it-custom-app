@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package core.v1;
+
+import "request/v1/base.proto";
+import "api/v1/generators.proto";
+import "api/v1/permissions.proto";
+import "buf/validate/validate.proto";
+import "core/v1/team.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "app/core/gen/core/v1;corev1";
+
+service UserTeamService {
+  option (api.v1.permissionKey) = "User";
+
+  rpc Get(request.v1.GetRequest) returns (UserTeam);
+  rpc List(request.v1.SelectRequest) returns (ListUserTeamResponse);
+  rpc Create(SaveUserTeamRequest) returns (UserTeam);
+  rpc Update(SaveUserTeamRequest) returns (UserTeam);
+  rpc Delete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+}
+
+message UserTeam {
+  option (api.v1.ts_grid) = true;
+
+  string id = 1;
+  string userId = 2 [(api.v1.ts_grid_opts) = {
+    column: {exclude: true}
+    filter: {quick: true}
+  }];
+  string userLabel = 3;
+  string teamId = 4 [(api.v1.ts_grid_opts) = {
+    column: {exclude: true}
+    filter: {quick: true}
+  }];
+  string teamLabel = 5;
+
+  int64 createdAt = 100;
+  string createdBy = 101;
+  string createdByLabel = 102;
+  optional int64 updatedAt = 103;
+  optional string updatedBy = 104;
+  optional string updatedByLabel = 105;
+}
+
+message SaveUserTeamRequest {
+  string ID = 1;
+  string userID = 2;
+  string teamID = 3;
+}
+
+message ListUserTeamResponse {
+  repeated UserTeam items = 1;
+  request.v1.PaginationResponse pagination = 2;
+}

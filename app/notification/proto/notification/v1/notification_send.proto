@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package notification.v1;
+
+import "api/v1/permissions.proto";
+import "buf/validate/validate.proto";
+import "notification/v1/notification.proto";
+import "notification/v1/notification_common.proto";
+
+option go_package = "app/notification/gen/notification/v1;notificationv1";
+
+service NotificationSendService {
+  option (api.v1.permissionKey) = "NotificationSend";
+
+  rpc Email(SendEmailRequest) returns (SendEmailResponse) {
+    option (api.v1.permissionAbility) = "Send";
+  }
+  rpc SMS(SendSMSRequest) returns (SendSMSResponse) {
+    option (api.v1.permissionAbility) = "Send";
+  }
+  rpc Send(SendNotificationRequest) returns (Notification) {
+    option (api.v1.permissionAbility) = "Send";
+  }
+}
+
+message SendEmailRequest {
+  optional string recipientUserId = 1;
+  string toAddress = 2 [(buf.validate.field).string.min_len = 3];
+  string subject = 3 [(buf.validate.field).string.min_len = 1];
+  string body = 4 [(buf.validate.field).string.min_len = 1];
+  optional string recipientLabel = 5;
+  optional string idempotencyKey = 6;
+  optional int64 scheduledAt = 7;
+}
+
+message SendEmailResponse {
+  string notificationId = 1;
+}
+
+message SendSMSRequest {
+  optional string recipientUserId = 1;
+  string toPhone = 2 [(buf.validate.field).string.min_len = 4];
+  string body = 3 [(buf.validate.field).string.min_len = 1];
+  optional string recipientLabel = 4;
+  optional string idempotencyKey = 5;
+  optional int64 scheduledAt = 6;
+}
+
+message SendSMSResponse {
+  string notificationId = 1;
+}
+
+message SendNotificationRequest {
+  NotificationDeliveryMechanism deliveryMechanism = 1;
+  optional string recipientUserId = 2;
+  optional string recipientLabel = 3;
+  optional string toAddress = 4;
+  optional string toPhone = 5;
+  optional string subject = 6;
+  string body = 7 [(buf.validate.field).string.min_len = 1];
+  optional string idempotencyKey = 8;
+  optional int64 scheduledAt = 9;
+}

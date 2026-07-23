@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package core.v1;
+
+import "request/v1/base.proto";
+import "api/v1/generators.proto";
+import "api/v1/permissions.proto";
+import "buf/validate/validate.proto";
+import "core/v1/role.proto";
+import "core/v1/team.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "app/core/gen/core/v1;corev1";
+
+service UserRoleService {
+  option (api.v1.permissionKey) = "UserRole";
+
+  rpc Get(request.v1.GetRequest) returns (UserRole);
+  rpc List(request.v1.SelectRequest) returns (ListUserRoleResponse);
+  rpc Create(SaveUserRoleRequest) returns (UserRole);
+  rpc Update(SaveUserRoleRequest) returns (UserRole);
+  rpc Delete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+}
+
+message UserRole {
+  option (api.v1.ts_grid) = true;
+
+  string id = 1;
+  string userId = 2 [(api.v1.ts_grid_opts) = {
+    column: {exclude: true}
+    filter: {quick: true}
+  }];
+  string userLabel = 3;
+  string roleId = 4 [(api.v1.ts_grid_opts) = {
+    column: {exclude: true}
+    filter: {quick: true}
+  }];
+  string roleLabel = 5;
+  optional int64 expiresAt = 6;
+
+  int64 createdAt = 100;
+  string createdBy = 101;
+  string createdByLabel = 102;
+  optional int64 updatedAt = 103;
+  optional string updatedBy = 104;
+  optional string updatedByLabel = 105;
+}
+
+message SaveUserRoleRequest {
+  string id = 1;
+  string userId = 2;
+  string roleId = 3;
+  optional int64 expiresAt = 4;
+}
+
+message ListUserRoleResponse {
+  repeated UserRole items = 1;
+  request.v1.PaginationResponse pagination = 2;
+}

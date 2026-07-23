@@ -1,0 +1,19 @@
+{
+  "name": "api",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "pkg/api",
+  "tags": ["go"],
+  "targets": {
+    "generate": {
+      "dependsOn": [
+        "global:install-buf-go-plugins",
+        "storage:generate"
+      ]
+    },
+    "clean": {},
+    "test": {},
+    "lint": {},
+    "tidy": {}
+  }
+}

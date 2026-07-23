@@ -1,0 +1,48 @@
+<!doctype html>
+<!--
+Copyright 2018 The Go Authors. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+-->
+<html>
+
+<head>
+  <meta charset="utf-8">
+</head>
+
+<body>
+
+<script src="wasm_exec.js"></script>
+<script>
+  const go = new Go();
+
+  WebAssembly.instantiateStreaming(fetch("./dist/form-validator.wasm"), go.importObject).then((result) => {
+    go.run(result.instance);
+    document.getElementById("validateBtn").addEventListener("click", function() {
+
+      const jsonMsg = document.getElementById("message").value;
+      const validationResult = window.validateMessage(jsonMsg);
+      console.log("Validation result:", validationResult);
+      document.getElementById("result").innerText = JSON.stringify(validationResult, null, 2);
+
+    });
+  }).catch((err) => {
+    console.error("Failed to instantiate WebAssembly module:", err);
+    document.getElementById("result").innerText = `Failed to instantiate WebAssembly module: ${JSON.stringify(err)}`;
+  });
+</script>
+
+<textarea id="message" rows="10" cols="80">
+{
+  "@type": "type.googleapis.com/core.v1.CreateUserRequest",
+  "username": "",
+  "disabled": true
+}
+</textarea>
+<br/>
+<button id="validateBtn">Validate Message</button>
+<pre id="result"></pre>
+
+</body>
+
+</html>

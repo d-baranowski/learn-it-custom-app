@@ -1,0 +1,73 @@
+{
+  "session.unpaid": [
+    {
+      "version": 1,
+      "displayName": "Session Unpaid",
+      "description": "Sent when an unpaid session is due and a therapist should be notified.",
+      "payloadFields": [
+        {
+          "path": "customer.firstName",
+          "type": 1,
+          "required": true
+        },
+        {
+          "path": "customer.fullName",
+          "type": 1,
+          "required": true
+        },
+        {
+          "path": "payment.link",
+          "type": 1,
+          "required": false
+        },
+        {
+          "path": "session.amountDue",
+          "type": 2,
+          "required": true
+        },
+        {
+          "path": "session.currency",
+          "type": 1,
+          "required": true
+        },
+        {
+          "path": "session.date",
+          "type": 4,
+          "required": true
+        },
+        {
+          "path": "session.id",
+          "type": 1,
+          "required": true
+        },
+        {
+          "path": "session.startAt",
+          "type": 5,
+          "required": true
+        },
+        {
+          "path": "therapist.fullName",
+          "type": 1,
+          "required": false
+        }
+      ]
+    },
+    {
+      "version": 2,
+      "displayName": "Session Unpaid",
+      "description": "Sent when unpaid sessions are due and a therapist should be notified.",
+      "payloadFields": [
+        {
+          "path": "sessions",
+          "type": 7,
+          "required": true
+        },
+        {
+          "path": "therapist.fullName",
+          "type": 1,
+          "required": false
+        }
+      ]
+    }
+  ]
+}

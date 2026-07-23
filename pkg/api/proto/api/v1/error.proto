@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package api.v1;
+
+option go_package = "pkg/api/gen/api/v1;apiv1";
+
+message InUseByEntityError {
+  string entityType = 1;
+  string message = 2;
+}
+
+message MustBeUniqueError {
+  string propertyName = 1;
+  string message = 2;
+}
+
+message RequiredArgumentMissingError {
+  string argumentName = 1;
+  string message = 2;
+}
+
+message ServerSideValidationError {
+  string code = 1;
+  string message = 2;
+}
+
+// ValidationError represents field-level validation errors from protovalidate
+// This maps to google.rpc.BadRequest structure where each field violation
+// corresponds to a validation constraint violation
+message ValidationError {
+  message FieldViolation {
+    // The field path that failed validation (e.g., "email", "user.name", "addresses[0].zip_code")
+    string field = 1;
+
+    // The constraint ID that was violated (e.g., "string.email", "int32.gt", "repeated.min_items")
+    string constraint_id = 2;
+
+    // Human-readable description of the constraint violation
+    string message = 3;
+  }
+
+  // All field violations that occurred during validation
+  repeated FieldViolation violations = 1;
+}
+

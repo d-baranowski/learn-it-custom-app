@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package core.auth.v1;
+
+import "core/session/v1/session.proto";
+import "core/v1/user.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "app/core/gen/core/auth/v1;authv1";
+
+service AuthService {
+  rpc Login(LoginRequest) returns (session.v1.UserSession) {}
+  rpc Logout(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+  rpc GetUserByAccount(GetUserByAccountRequest) returns (core.v1.User) {}
+}
+
+message GetUserByAccountRequest {
+  string account = 1;
+}
+
+message LoginRequest {
+  string account = 1;
+  string password = 2;
+  bool usingEmail = 3;
+}

@@ -1,0 +1,95 @@
+services:
+  postgres:
+    # container_name removed: Compose auto-names as <project>-postgres-1 so
+    # parallel stacks (each with their own COMPOSE_PROJECT_NAME) don't clash.
+    build:
+      dockerfile: ./docker/postgres/Dockerfile
+    command: [
+      "postgres",
+      "-c", "log_destination=stderr",
+      #"-c", "shared_preload_libraries=pg_stat_statements,pg_cron,powa,pg_stat_kcache,pg_qualstats",
+      "-c", "shared_preload_libraries=pg_cron",
+      #"-c", "pg_stat_statements.max=10000",
+      #"-c", "pg_stat_statements.track=all",
+      "-c", "wal_level=logical",
+      "-c", "max_wal_senders=10",
+      "-c", "max_replication_slots=10",
+      "-c", "cron.database_name=rpg",
+    ]
+    ports:
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
+    restart: always
+    shm_size: 4g
+    volumes:
+      - ./docker/postgres/initdb.d:/docker-entrypoint-initdb.d:ro
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      timeout: 1s
+      retries: 10
+    networks:
+      - rpg
+
+  redis:
+    # container_name removed for parallel-stack isolation (see postgres above).
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - "${REDIS_HOST_PORT:-6379}:6379"
+    environment:
+      REDIS_PASSWORD: password
+    command: sh -c 'redis-server --save 20 1 --loglevel warning --requirepass $${REDIS_PASSWORD}'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: redis-cli -a $${REDIS_PASSWORD} ping | grep PONG
+      interval: 2s
+      timeout: 1s
+      retries: 10
+    networks:
+      - rpg
+
+  pgadmin:
+    # container_name removed for parallel-stack isolation (see postgres above).
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "${PGADMIN_HOST_PORT:-5050}:80"
+    volumes:
+      - ./docker/pgadmin_config/servers.json:/pgadmin4/servers.json
+      - ./docker/pgadmin_config/.pgpass:/var/lib/pgadmin/.pgpass
+    depends_on:
+      - postgres
+    networks:
+      - rpg
+
+  otel-lgtm:
+    # container_name removed for parallel-stack isolation (see postgres above).
+    image: grafana/otel-lgtm:0.11.7
+    restart: unless-stopped
+    ports:
+      - "${OTEL_GRPC_HOST_PORT:-4317}:4317"
+      - "${OTEL_HTTP_HOST_PORT:-4318}:4318"
+      - "${GRAFANA_HOST_PORT:-3001}:3000"
+    volumes:
+      - otel_lgtm_data:/data
+      - ./deployment/grafana/dashboards:/otel-lgtm/grafana-dashboards-utro:ro
+      - ./deployment/grafana/provisioning/dashboards/utro-dashboards.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/utro-dashboards.yaml:ro
+    networks:
+      - rpg
+
+networks:
+  rpg:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  otel_lgtm_data:

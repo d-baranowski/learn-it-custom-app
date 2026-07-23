@@ -1,0 +1,9 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+cmd = "go build -o ./tmp/notification ./cmd/main.go"
+bin = "tmp/notification"
+full_bin = "./tmp/notification"
+include_ext = ["go"]
+exclude_dir = ["gen", "tmp"]

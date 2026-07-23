@@ -1,0 +1,445 @@
+.page {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  background: #ffffff;
+  padding: 24px;
+}
+
+.breadcrumbBar {
+  margin-bottom: 16px;
+  color: #5f5e5a;
+  font-size: 14px;
+}
+
+.shell {
+  width: 100%;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #e0ded5;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px -10px rgba(16, 24, 40, 0.12);
+  overflow: hidden;
+}
+
+.header {
+  padding: 16px 24px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.selectorRow {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  padding: 16px 24px;
+  margin-top: 16px;
+  border-top: 1px solid #f1efe9;
+  border-bottom: 1px solid #e0ded5;
+}
+
+.toolbarActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.toolbarPushRight {
+  margin-left: auto;
+}
+
+.toolButton {
+  border: 1px solid #e0ded5;
+  background: #f6f4ee;
+  color: #2c2c2a;
+  padding: 6px 12px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.toolButton:hover {
+  background: #eeeae0;
+}
+
+.toolButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toolButton:disabled:hover {
+  background: #f6f4ee;
+}
+
+.toolbarHint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #5f5e5a;
+  font-size: 12px;
+}
+
+.timeline {
+  padding: 18px 24px 12px;
+}
+
+.axisRow,
+.dayRow {
+  display: grid;
+  grid-template-columns: 116px 1fr;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.axis {
+  position: relative;
+  height: 18px;
+}
+
+.tick {
+  position: absolute;
+  top: 0;
+  color: #888780;
+  font-size: 10px;
+  transform: translateX(-50%);
+}
+
+.tickRight {
+  transform: translateX(-100%);
+}
+
+.dayLabel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 6px 0 2px;
+}
+
+.dayLabelOff {
+  color: #888780;
+}
+
+.dayName {
+  color: #2c2c2a;
+  font-size: 13px;
+}
+
+.copyDayButton {
+  border: none;
+  background: transparent;
+  color: #888780;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.copyDayButton:hover {
+  background: #f6f4ee;
+  color: #2c2c2a;
+}
+
+.copyDayButtonDisabled {
+  opacity: 0.4;
+}
+
+.track {
+  position: relative;
+  height: 40px;
+  border-radius: 6px;
+  background: #fafaf6;
+  border: 1px solid #e0ded5;
+  cursor: crosshair;
+  overflow: visible;
+}
+
+.trackOff {
+  background: #f4f2ec;
+  display: flex;
+  align-items: center;
+  padding-left: 12px;
+}
+
+.offHint {
+  color: #888780;
+  font-size: 11px;
+  font-style: italic;
+  pointer-events: none;
+}
+
+.block {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  background: #ddd6f3;
+  border: 1px solid #534ab7;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  overflow: hidden;
+  user-select: none;
+}
+
+.block:hover {
+  background: #d5ccef;
+}
+
+.blockSelected {
+  top: 2px;
+  bottom: 2px;
+  background: #c7beec;
+  box-shadow: 0 2px 8px rgba(83, 74, 183, 0.2);
+}
+
+.blockGhost {
+  background: rgba(83, 74, 183, 0.18);
+  border-style: dashed;
+}
+
+.blockLabel {
+  padding: 0 18px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #2c2c2a;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.resizeHandle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 12px;
+  cursor: ew-resize;
+}
+
+.resizeLeft {
+  left: 0;
+}
+
+.resizeRight {
+  right: 0;
+}
+
+.selectedToolbar {
+  position: absolute;
+  top: -48px;
+  transform: translateX(-50%);
+  background: #ffffff;
+  color: #2c2c2a;
+  border: 1px solid #e0ded5;
+  border-radius: 10px;
+  padding: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 3;
+  box-shadow: 0 12px 24px rgba(16, 24, 40, 0.18);
+}
+
+.toolbarIcon {
+  color: inherit;
+}
+
+.toolbarDivider {
+  width: 1px;
+  align-self: stretch;
+  background: #e0ded5;
+  margin: 4px 2px;
+}
+
+.toolbarDanger {
+  color: #d14343;
+}
+
+.loadingState,
+.emptyState {
+  padding: 48px 24px 40px;
+  color: #5f5e5a;
+  text-align: center;
+}
+
+.totalBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 24px;
+  background: #fafaf6;
+  border-top: 1px solid #e0ded5;
+  color: #5f5e5a;
+  font-size: 12px;
+}
+
+.snapLabel {
+  color: #5f5e5a;
+  font-size: 12px;
+}
+
+.undoToast {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.undoToastButton {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.templateSheet {
+  width: 480px;
+  max-width: calc(100vw - 32px);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 12px 40px rgba(16, 24, 40, 0.16);
+}
+
+.templateHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.templateTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c2c2a;
+}
+
+.templateSubtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #5f5e5a;
+}
+
+.templateClose {
+  flex-shrink: 0;
+  color: #888780;
+}
+
+.templateList {
+  display: flex;
+  flex-direction: column;
+}
+
+.templateRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 12px;
+  border: 0;
+  background: transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.templateRow:hover {
+  background: #f6f4ee;
+}
+
+.templateRowText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.templateName {
+  font-size: 15px;
+  font-weight: 600;
+  color: #2c2c2a;
+}
+
+.templateDesc {
+  font-size: 13px;
+  color: #888780;
+}
+
+.templateDays {
+  display: inline-flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.templateDayChip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.templateDayOn {
+  background: #6d5bb5;
+  color: #ffffff;
+}
+
+.templateDayOff {
+  background: #efece4;
+  color: #b6b3aa;
+}
+
+@media (max-width: 720px) {
+  .page {
+    padding: 16px;
+  }
+
+  .axisRow,
+  .dayRow {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .axisRow {
+    display: none;
+  }
+
+  .dayLabel {
+    padding: 0;
+  }
+
+  .track {
+    height: 44px;
+  }
+
+  .totalBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

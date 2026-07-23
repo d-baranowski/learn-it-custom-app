@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package core.v1;
+
+import "request/v1/base.proto";
+import "api/v1/permissions.proto";
+import "buf/validate/validate.proto";
+import "google/protobuf/empty.proto";
+import "api/v1/generators.proto";
+
+option go_package = "app/core/gen/core/v1;corev1";
+
+service TeamService {
+  option (api.v1.permissionKey) = "Team";
+
+  rpc Autocomplete(request.v1.AutocompleteRequest) returns (request.v1.AutocompleteResponse);
+
+  rpc Get(request.v1.GetRequest) returns (Team) {};
+  rpc List(request.v1.SelectRequest) returns (ListTeamResponse) {};
+  rpc Create(SaveTeamRequest) returns (Team) {};
+  rpc Update(SaveTeamRequest) returns (Team) {};
+  rpc SoftDelete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+  rpc Delete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+}
+
+message ListTeamResponse {
+  repeated Team items = 1;
+  request.v1.PaginationResponse pagination = 2;
+}
+
+message Team {
+  option (api.v1.ts_grid) = true;
+
+  message User {
+    string id = 1;
+    string name = 2;
+    string email = 3;
+  }
+
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  repeated User users = 4;
+
+  int64 createdAt = 100;
+  string createdBy = 101;
+  optional string createdByLabel = 102;
+  optional int64 updatedAt = 103;
+  optional string updatedBy = 104;
+  optional string updatedByLabel = 105;
+  optional int64 deletedAt = 106;
+  optional string deletedBy = 107;
+  optional string deletedByLabel = 108;
+}
+
+message SaveTeamRequest {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+}

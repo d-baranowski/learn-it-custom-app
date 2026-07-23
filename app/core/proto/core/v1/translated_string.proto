@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package core.v1;
+
+import "request/v1/base.proto";
+import "api/v1/generators.proto";
+import "api/v1/permissions.proto";
+import "buf/validate/validate.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "app/core/gen/core/v1;corev1";
+
+message TranslatedString {
+  option (api.v1.ts_grid) = false;
+
+  string en = 2;
+  string pl = 3;
+}

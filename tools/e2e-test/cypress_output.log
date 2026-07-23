@@ -1,0 +1,114 @@
+Warning: The allowCypressEnv configuration option is enabled. This allows any browser code to read values from Cypress.env(). This is insecure and will be removed in a future major version.
+
+1. Replace Cypress.env() calls with cy.env() (for sensitive values) or Cypress.expose() (for public configuration)
+2. Set allowCypressEnv: false in your Cypress configuration to disable Cypress.env()
+
+Learn more: https://on.cypress.io/cypress-env-migration
+
+
+================================================================================
+
+  (Run Starting)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Cypress:        15.13.0                                                                        │
+  │ Browser:        Electron 138 (headless)                                                        │
+  │ Node Version:   v22.20.0 (/Users/danielbaranowski/.asdf/installs/nodejs/22.20.0/bin/node)      │
+  │ Specs:          1 found (therapy-sessions-tab-optimistic-update.cy.ts)                         │
+  │ Searched:       cypress/e2e/therapy-tests/therapy-sessions-tab-optimistic-update.cy.ts         │
+  │ Experiments:    experimentalMemoryManagement=true                                              │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+Remove output folder /Users/danielbaranowski/Workspace/utro/tools/e2e-test/cypress/reports
+[cypress] Initial database reset successful
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  therapy-sessions-tab-optimistic-update.cy.ts                                    (1 of 1)
+
+
+  Therapy → Sessions Tab → Optimistic Update
+    (Attempt 1 of 2) THR_E2E_SES_OPTIMISTIC: should update the grid row optimistically while save is in flight
+    1) THR_E2E_SES_OPTIMISTIC: should update the grid row optimistically while save is in flight
+
+
+  0 passing (1m)
+  1 failing
+
+  1) Therapy → Sessions Tab → Optimistic Update
+       THR_E2E_SES_OPTIMISTIC: should update the grid row optimistically while save is in flight:
+     AssertionError: Timed out retrying after 15000ms: Expected to find element: `[data-form-entity="session"] [data-testid="form-submit-btn"]`, but never found it.
+      at __webpack_modules__../cypress/e2e/components-objects/session-form.component.ts.SessionFormComponent.assertNotSaving (webpack://utro-e2e-test/./cypress/e2e/components-objects/session-form.component.ts:108:72)
+      at Context.eval (webpack://utro-e2e-test/./cypress/e2e/therapy-tests/therapy-sessions-tab-optimistic-update.cy.ts:75:18)
+      at getRet (http://localhost:3000/__cypress/runner/cypress_runner.js:122798:20)
+      at tryCatcher (http://localhost:3000/__cypress/runner/cypress_runner.js:1777:23)
+      at Promise.attempt.Promise.try (http://localhost:3000/__cypress/runner/cypress_runner.js:4285:29)
+      at Context.thenFn (http://localhost:3000/__cypress/runner/cypress_runner.js:122809:66)
+      at Context.then (http://localhost:3000/__cypress/runner/cypress_runner.js:123060:21)
+      at wrapped (http://localhost:3000/__cypress/runner/cypress_runner.js:146287:19)
+
+
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        1                                                                                │
+  │ Passing:      0                                                                                │
+  │ Failing:      1                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  2                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     1 minute, 3 seconds                                                              │
+  │ Spec Ran:     therapy-sessions-tab-optimistic-update.cy.ts                                     │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+  (Screenshots)
+
+  -  /Users/danielbaranowski/Workspace/utro/tools/e2e-test/cypress/screenshots/therap     (1280x720)
+     y-sessions-tab-optimistic-update.cy.ts/Therapy → Sessions Tab → Optimistic Updat               
+     e -- THR_E2E_SES_OPTIMISTIC should update the grid row optimistically while save               
+      is in flight (failed).png                                                                     
+  -  /Users/danielbaranowski/Workspace/utro/tools/e2e-test/cypress/screenshots/therap     (1280x720)
+     y-sessions-tab-optimistic-update.cy.ts/Therapy → Sessions Tab → Optimistic Updat               
+     e -- THR_E2E_SES_OPTIMISTIC should update the grid row optimistically while save               
+      is in flight (failed) (attempt 2).png                                                         
+
+Start generate report process
+Read and merge jsons from "/Users/danielbaranowski/Workspace/utro/tools/e2e-test/cypress/reports/.jsons"
+[cypress] afterRunHook failed, continuing: Error: Pattern /Users/danielbaranowski/Workspace/utro/tools/e2e-test/cypress/reports/.jsons/*.json matched no report files
+    at /Users/danielbaranowski/Workspace/utro/tools/e2e-test/node_modules/.pnpm/mochawesome-merge@5.1.1/node_modules/mochawesome-merge/lib/index.js:14:11
+    at Array.map (<anonymous>)
+    at /Users/danielbaranowski/Workspace/utro/tools/e2e-test/node_modules/.pnpm/mochawesome-merge@5.1.1/node_modules/mochawesome-merge/lib/utils.js:3:46
+    at merge (/Users/danielbaranowski/Workspace/utro/tools/e2e-test/node_modules/.pnpm/mochawesome-merge@5.1.1/node_modules/mochawesome-merge/lib/index.js:84:17)
+    at mergeAndCreate (/Users/danielbaranowski/Workspace/utro/tools/e2e-test/node_modules/.pnpm/cypress-mochawesome-reporter@4.0.2_cypress@15.13.0_mocha@11.7.5/node_modules/cypress-mochawesome-reporter/lib/generateReport.js:12:24)
+    at generateReport (/Users/danielbaranowski/Workspace/utro/tools/e2e-test/node_modules/.pnpm/cypress-mochawesome-reporter@4.0.2_cypress@15.13.0_mocha@11.7.5/node_modules/cypress-mochawesome-reporter/lib/generateReport.js:55:20)
+    at afterRunHook (/Users/danielbaranowski/Workspace/utro/tools/e2e-test/node_modules/.pnpm/cypress-mochawesome-reporter@4.0.2_cypress@15.13.0_mocha@11.7.5/node_modules/cypress-mochawesome-reporter/lib/index.js:51:9)
+    at Object.handler (/Users/danielbaranowski/Workspace/utro/tools/e2e-test/cypress.config.ts:97:17)
+    at invoke (/Users/danielbaranowski/Library/Caches/Cypress/15.13.0/Cypress.app/Contents/Resources/app/packages/server/lib/plugins/child/run_plugins.js:181:18)
+    at /Users/danielbaranowski/Library/Caches/Cypress/15.13.0/Cypress.app/Contents/Resources/app/packages/server/lib/plugins/util.js:77:14
+    at tryCatcher (/Users/danielbaranowski/Library/Caches/Cypress/15.13.0/Cypress.app/Contents/Resources/app/node_modules/bluebird/js/release/util.js:16:23)
+    at Promise.attempt.Promise.try (/Users/danielbaranowski/Library/Caches/Cypress/15.13.0/Cypress.app/Contents/Resources/app/node_modules/bluebird/js/release/method.js:39:29)
+    at Object.wrapChildPromise (/Users/danielbaranowski/Library/Caches/Cypress/15.13.0/Cypress.app/Contents/Resources/app/packages/server/lib/plugins/util.js:76:23)
+    at RunPlugins.execute (/Users/danielbaranowski/Library/Caches/Cypress/15.13.0/Cypress.app/Contents/Resources/app/packages/server/lib/plugins/child/run_plugins.js:160:21)
+    at EventEmitter.<anonymous> (/Users/danielbaranowski/Library/Caches/Cypress/15.13.0/Cypress.app/Contents/Resources/app/packages/server/lib/plugins/child/run_plugins.js:56:12)
+    at EventEmitter.emit (node:events:519:28)
+    at process.<anonymous> (/Users/danielbaranowski/Library/Caches/Cypress/15.13.0/Cypress.app/Contents/Resources/app/packages/server/lib/plugins/util.js:51:22)
+    at process.emit (node:events:519:28)
+    at emit (node:internal/child_process:949:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:91:21)
+
+================================================================================
+
+  (Run Finished)
+
+
+       Spec                                              Tests  Passing  Failing  Pending  Skipped  
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ ✖  therapy-sessions-tab-optimistic-upd      01:03        1        -        1        -        - │
+  │    ate.cy.ts                                                                                   │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+    ✖  1 of 1 failed (100%)                     01:03        1        -        1        -        -  
+

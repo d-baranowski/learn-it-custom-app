@@ -1,0 +1,25 @@
+export function createRouterMock(pathname = '/') {
+  return {
+    basePath: '',
+    pathname,
+    route: pathname,
+    asPath: pathname,
+    query: {},
+    push: async () => true,
+    replace: async () => true,
+    reload: () => {},
+    back: () => {},
+    forward: () => {},
+    prefetch: async () => undefined,
+    beforePopState: () => {},
+    events: { on: () => {}, off: () => {}, emit: () => {} },
+    isFallback: false,
+    isLocaleDomain: false,
+    isReady: true,
+    defaultLocale: 'en',
+    domainLocales: [],
+    isPreview: false,
+    locale: 'en',
+    locales: ['en'],
+  };
+}

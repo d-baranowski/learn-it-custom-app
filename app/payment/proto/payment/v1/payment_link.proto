@@ -1,0 +1,100 @@
+syntax = "proto3";
+
+package payment.v1;
+
+import "request/v1/base.proto";
+import "api/v1/generators.proto";
+import "api/v1/permissions.proto";
+
+option go_package = "app/payment/gen/payment/v1;paymentv1";
+
+service PaymentService {
+  option (api.v1.permissionKey) = "PaymentLink";
+
+  rpc Get(request.v1.GetRequest) returns (PaymentLink) {}
+  rpc List(request.v1.SelectRequest) returns (ListPaymentLinkResponse) {}
+  rpc UpsertSessionPaymentLink(UpsertSessionPaymentLinkRequest) returns (PaymentLink) {}
+}
+
+message PaymentLink {
+  option (api.v1.ts_grid) = true;
+
+  string id = 1[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  string provider = 2[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Provider",
+      visible: true,
+    }
+  }];
+  string status = 3[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Status",
+      visible: true,
+    },
+    filter: {
+      quick: true,
+      quickLabel: "Status",
+    }
+  }];
+  optional string url = 4[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "URL",
+      visible: false,
+    }
+  }];
+  optional string errorMessage = 5[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Error",
+      visible: false,
+    }
+  }];
+  string amount = 6[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Amount",
+      visible: true,
+    }
+  }];
+  string currency = 7[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Currency",
+      visible: true,
+    }
+  }];
+  string description = 8[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Description",
+      visible: false,
+    }
+  }];
+  optional string providerReference = 9[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Provider Reference",
+      visible: false,
+    }
+  }];
+  int32 attemptCount = 10;
+  optional int64 nextAttemptAt = 11;
+  optional int64 lastAttemptAt = 12;
+  int64 createdAt = 100;
+  string createdBy = 101;
+  optional int64 updatedAt = 102;
+  optional string updatedBy = 103;
+}
+
+message UpsertSessionPaymentLinkRequest {
+  optional string paymentLinkId = 1;
+  // Amount in major units as a decimal string (PLN, e.g. "230.00"). Converted
+  // to minor units (grosze) server-side before it is sent to Stripe.
+  string amount = 2;
+  string currency = 3;
+  string description = 4;
+}
+
+message ListPaymentLinkResponse {
+  repeated PaymentLink items = 1;
+  request.v1.PaginationResponse pagination = 2;
+}

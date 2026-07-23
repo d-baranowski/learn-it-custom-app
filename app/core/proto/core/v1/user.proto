@@ -1,0 +1,130 @@
+syntax = "proto3";
+
+package core.v1;
+
+import "request/v1/base.proto";
+import "api/v1/generators.proto";
+import "api/v1/permissions.proto";
+import "buf/validate/validate.proto";
+import "core/v1/role.proto";
+import "core/v1/team.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "app/core/gen/core/v1;corev1";
+
+service UserService {
+  option (api.v1.permissionKey) = "User";
+
+  rpc Autocomplete(request.v1.AutocompleteRequest) returns (request.v1.AutocompleteResponse);
+  rpc Get(request.v1.GetRequest) returns (User);
+  rpc List(request.v1.SelectRequest) returns (ListUserResponse);
+  rpc Create(SaveUserRequest) returns (User);
+  rpc Update(SaveUserRequest) returns (User);
+  rpc ResetUserPassword(ResetUserPasswordRequest) returns (google.protobuf.Empty);
+  rpc SoftDelete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+  rpc Delete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+  rpc BulkResetUserPassword(BulkResetUserPasswordRequest) returns (google.protobuf.Empty);
+  rpc UpdateUserPassword(ResetUserPasswordRequest) returns (google.protobuf.Empty);
+}
+
+message User {
+  option (api.v1.ts_grid) = true;
+
+  string id = 1;
+  string username = 2;
+  optional string displayName = 3[(api.v1.ts_grid_opts) = {
+    filter: {
+      form: true,
+      quick: true,
+      formLabel: "Display Name",
+      quickLabel: "Display Name",
+    }
+  }];
+  optional string email = 4;
+  string externalId = 5 [(api.v1.ts_grid_opts) = {
+    column: {exclude: true}
+  }];
+  string avatar = 6[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: true,
+      columnRendererType: "profilePicture",
+      enableSorting: false
+    },
+    filter: {
+      form: false,
+      quick: false,
+    }
+  }];
+  bool disabled = 7;
+  optional string displayAbbreviation = 8;
+  string userRolesLabel = 10;
+  string userTeamsLabel = 11;
+
+  bool resetPass = 12 [(api.v1.ts_grid_opts) = {
+    column: {exclude: true}
+  }];
+
+  int64 createdAt = 100;
+  string createdBy = 101;
+  string createdByLabel = 102;
+  optional int64 updatedAt = 103;
+  optional string updatedBy = 104;
+  optional string updatedByLabel = 105;
+  optional int64 deletedAt = 106;
+  optional string deletedBy = 107;
+  optional string deletedByLabel = 108;
+}
+
+message SaveUserRequest {
+  string id = 1;
+  string username = 2 [
+    (buf.validate.field).cel = {
+      id: "user.username.1",
+      message: "Username must be longer than 5 letter",
+      expression: "this.size() > 5"
+    }
+  ];
+  optional string displayName = 3 [
+    (buf.validate.field).cel = {
+      id: "user.displayName.1",
+      message: "Display name must be longer than 5 letter",
+      expression: "this.size() > 5"
+    }
+  ];
+  optional string email = 4;
+  string externalId = 5;
+  string avatar = 6;
+  bool disabled = 7;
+  optional string displayAbbreviation = 8;
+}
+
+message ListUserResponse {
+  repeated User items = 1;
+  request.v1.PaginationResponse pagination = 2;
+}
+
+message ResetUserPasswordRequest {
+  string id = 1;
+  string password = 2;
+}
+
+message BulkResetUserPasswordRequest {
+  string ids = 1;
+  string password = 2;
+}
+
+message UserBookmark {
+  string id = 1;
+  string userId = 2;
+  string name = 3;
+  string url = 4;
+  bool favourite = 5;
+  optional string parentId = 6;
+  int64 createdAt = 101;
+}
+
+message UserSetting {
+  string userId = 1;
+  string key = 2;
+  bytes value = 3;
+}

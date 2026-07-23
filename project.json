@@ -1,0 +1,32 @@
+{
+  "name": "utro3",
+  "$schema": "./node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": ".",
+  "tags": [
+    "utro"
+  ],
+  "targets": {
+    "spin-up": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "command": "./spin-up.sh"
+      }
+    },
+    "run-stack": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "command": "./run-stack.sh"
+      }
+    },
+    "stop-stack": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{workspaceRoot}",
+        "command": "./stop-stack.sh"
+      }
+    }
+  }
+}

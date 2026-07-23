@@ -1,0 +1,272 @@
+syntax = "proto3";
+
+package core.v1;
+
+import "request/v1/base.proto";
+import "api/v1/generators.proto";
+import "api/v1/permissions.proto";
+import "buf/validate/validate.proto";
+import "google/protobuf/empty.proto";
+import "core/v1/translated_string.proto";
+
+option go_package = "app/core/gen/core/v1;corev1";
+
+service TherapistService {
+  option (api.v1.permissionKey) = "Therapist";
+
+  rpc Autocomplete(request.v1.AutocompleteRequest) returns (request.v1.AutocompleteResponse);
+  rpc Create(SaveTherapistRequest) returns (Therapist) {}
+  rpc Get(request.v1.GetRequest) returns (Therapist) {}
+  rpc List(request.v1.SelectRequest) returns (ListTherapistResponse) {}
+  rpc Update(SaveTherapistRequest) returns (Therapist) {}
+  rpc SoftDelete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+  rpc Delete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+}
+
+message Therapist {
+  option (api.v1.ts_grid) = true;
+
+  string id = 1[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  optional string userId = 2[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    },
+    filter: {
+      form: true,
+      formLabel: "User",
+    }
+  }];
+  optional string userLabel = 50[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Name",
+      visible: true,
+      order: 2
+    },
+    filter: {
+      quick: true,
+      quickLabel: "Name",
+    }
+  }];
+  optional string userAbbreviationLabel = 52[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Abbreviation",
+      visible: true,
+      order: 3
+    }
+  }];
+  optional string displayColor = 53 [(api.v1.ts_grid_opts) = {
+    column: {
+      columnRendererType: "color",
+      visible: true,
+      order: 4
+    },
+    filter: {
+      form: true,
+      formLabel: "Color",
+      type: "color"
+    }
+  }];
+  TranslatedString professionalTitle = 3[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: true,
+      order: 5
+    },
+    filter: {
+      quick: true,
+    }
+  }];
+  TranslatedString description = 4[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  repeated string languageIds = 5[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    },
+    filter: {
+      form: true,
+      quickLabel: "Language",
+      formLabel: "Language",
+    }
+  }];
+  repeated TranslatedString languageLabels = 51[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Languages",
+      visible: true,
+      columnRendererType: "translatedStringArray",
+      order: 6
+    },
+    filter: {
+      quick: false,
+      form: false
+    }
+  }];
+  bool inPersonTherapyFormat = 6[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: true,
+      order: 7
+    }
+  }];
+  bool onlineTherapyFormat = 7[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: true,
+      order: 8
+    }
+  }];
+  optional string profileImage = 8[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: true,
+      columnRendererType: "profilePicture",
+      enableSorting: false,
+      order: 1
+    },
+    filter: {
+      form: false,
+      quick: false,
+    }
+  }];
+  string contactEmail = 9[(buf.validate.field).string.email = true, (api.v1.ts_grid_opts) = {
+    column: {
+      visible: true,
+      order: 9
+    }
+  }];
+  optional string contactPhone = 10[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: true,
+      order: 10
+    }
+  }];
+  bool isAcceptingNewClients = 11[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: true,
+      order: 11
+    }
+  }];
+  string slug = 12[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  TranslatedString metaDescription = 13[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  repeated string searchTags = 14[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  optional double percentageProfitSharing = 15[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: true,
+      header: "Profit Share %",
+      order: 12
+    }
+  }];
+
+  int64 createdAt = 100[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  string createdBy = 101[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  optional string createdByLabel = 102[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  optional int64 updatedAt = 103[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  optional string updatedBy = 104[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  optional string updatedByLabel = 105[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  optional int64 deletedAt = 106[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  optional string deletedBy = 107[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  optional string deletedByLabel = 108[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+}
+
+message SaveTherapistRequest {
+  // Per-language requirements for the nested TranslatedString profile fields.
+  // Message-level (not field-level) so the expression reaches the subfield and
+  // still runs when the message is unset; each rule id is the UI field path the
+  // WASM validator surfaces so the form highlights the exact language tab.
+  option (buf.validate.message).cel = {
+    id: "professionalTitle.en"
+    message: "Professional Title (English) is required"
+    expression: "has(this.professionalTitle) && this.professionalTitle.en != ''"
+  };
+  option (buf.validate.message).cel = {
+    id: "professionalTitle.pl"
+    message: "Professional Title (Polish) is required"
+    expression: "has(this.professionalTitle) && this.professionalTitle.pl != ''"
+  };
+  option (buf.validate.message).cel = {
+    id: "description.en"
+    message: "Description (English) is required"
+    expression: "has(this.description) && this.description.en != ''"
+  };
+  option (buf.validate.message).cel = {
+    id: "description.pl"
+    message: "Description (Polish) is required"
+    expression: "has(this.description) && this.description.pl != ''"
+  };
+
+  string id = 1;
+  optional string userId = 2;
+  optional string displayColor = 16;
+  TranslatedString professionalTitle = 3;
+  TranslatedString description = 4;
+  repeated string languageIds = 5;
+  bool inPersonTherapyFormat = 6;
+  bool onlineTherapyFormat = 7;
+  optional string profileImage = 8;
+  string contactEmail = 9[(buf.validate.field).string.email = true];
+  optional string contactPhone = 10;
+  bool isAcceptingNewClients = 11;
+  string slug = 12[(buf.validate.field).cel = {
+    id: "SaveTherapistRequest.slug"
+    message: "URL Slug is required"
+    expression: "this != ''"
+  }];
+  TranslatedString metaDescription = 13;
+  repeated string searchTags = 14;
+  optional double percentageProfitSharing = 15;
+}
+
+message ListTherapistResponse {
+  repeated Therapist items = 1;
+  request.v1.PaginationResponse pagination = 2;
+}

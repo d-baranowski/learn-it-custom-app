@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package notification.v1;
+
+import "request/v1/base.proto";
+import "api/v1/generators.proto";
+import "api/v1/permissions.proto";
+import "notification/v1/notification_common.proto";
+
+option go_package = "app/notification/gen/notification/v1;notificationv1";
+
+service NotificationService {
+  option (api.v1.permissionKey) = "Notification";
+
+  rpc Get(request.v1.GetRequest) returns (Notification) {}
+  rpc List(request.v1.SelectRequest) returns (ListNotificationResponse) {}
+  rpc SoftDelete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+}
+
+message Notification {
+  option (api.v1.ts_grid) = true;
+
+  string id = 1 [(api.v1.ts_grid_opts) = { column: { visible: false } }];
+  optional string recipientUserId = 2 [(api.v1.ts_grid_opts) = { column: { visible: false } }];
+  optional string recipientLabel = 3 [(api.v1.ts_grid_opts) = {
+    column: { header: "Recipient", visible: true, columnRendererType: "notificationRecipient" },
+    filter: { quick: true }
+  }];
+  optional string recipientEmail = 4 [(api.v1.ts_grid_opts) = { column: { visible: false }, filter: { quick: true } }];
+  optional string recipientPhone = 5 [(api.v1.ts_grid_opts) = { column: { visible: false }, filter: { quick: true } }];
+  NotificationDeliveryMechanism deliveryMechanism = 6 [(api.v1.ts_grid_opts) = {
+    column: { header: "Channel", visible: true, columnRendererType: "enum" },
+    filter: { quick: true }
+  }];
+  NotificationStatus status = 7 [(api.v1.ts_grid_opts) = {
+    column: { header: "Status", visible: true, columnRendererType: "notificationStatus" },
+    filter: { quick: true }
+  }];
+  optional string subject = 8;
+  string body = 9 [(api.v1.ts_grid_opts) = { column: { visible: false } }];
+  optional string errorMessage = 10 [(api.v1.ts_grid_opts) = { column: { header: "Error", visible: false } }];
+  optional int64 sentAt = 11;
+  int32 attemptCount = 12 [(api.v1.ts_grid_opts) = { column: { header: "Attempts", visible: true } }];
+  optional string providerMessageId = 13 [(api.v1.ts_grid_opts) = { column: { visible: false } }];
+  NotificationDeliveryStatus deliveryStatus = 14 [(api.v1.ts_grid_opts) = { column: { visible: false } }];
+  optional int64 deliveryStatusUpdatedAt = 15 [(api.v1.ts_grid_opts) = { column: { visible: false } }];
+  optional string deliveryFailureReason = 16 [(api.v1.ts_grid_opts) = { column: { visible: false } }];
+  optional int64 scheduledAt = 17 [(api.v1.ts_grid_opts) = { column: { header: "Scheduled At", visible: true } }];
+
+  int64 createdAt = 100;
+  string createdBy = 101;
+  optional int64 updatedAt = 102;
+  optional string updatedBy = 103;
+  optional int64 deletedAt = 104;
+  optional string deletedBy = 105;
+}
+
+message ListNotificationResponse {
+  repeated Notification items = 1;
+  request.v1.PaginationResponse pagination = 2;
+}

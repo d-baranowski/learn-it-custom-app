@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package core.me.v1;
+
+import "core/v1/permission.proto";
+import "core/v1/user.proto";
+import "google/protobuf/empty.proto";
+import "api/v1/permissions.proto";
+
+option go_package = "app/core/gen/core/me/v1;mev1";
+
+service MeService {
+  rpc Get(google.protobuf.Empty) returns (core.v1.User) {
+    option (api.v1.permissionAllowAll) = true;
+  }
+
+  rpc CheckPermission(CheckPermissionRequest) returns (CheckPermissionResponse) {
+    option (api.v1.permissionAllowAll) = true;
+  }
+  rpc GetPermissions(google.protobuf.Empty) returns (GetPermissionsResponse) {
+    option (api.v1.permissionAllowAll) = true;
+  }
+
+  rpc Update(UpdateMeRequest) returns (core.v1.User) {
+    option (api.v1.permissionAllowAll) = true;
+  }
+  rpc UpdateAvatar(UpdateAvatarRequest) returns (core.v1.User) {
+    option (api.v1.permissionAllowAll) = true;
+  }
+}
+
+message CheckPermissionRequest {
+  string group = 1;
+  string ability = 2;
+}
+
+message CheckPermissionResponse {
+  bool allowed = 1;
+}
+
+message GetPermissionsResponse {
+  message Group {
+    repeated string abilities = 1;
+  }
+  map<string, Group> groups = 1;
+  optional bool Enforce = 2;
+}
+
+message UpdateMeRequest {
+  string displayName = 1;
+}
+
+message UpdateAvatarRequest {
+  string base64img = 1;
+}

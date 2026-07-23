@@ -1,0 +1,12 @@
+{
+  "name": "sqlcrypt",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "pkg/sqlcrypt",
+  "tags": ["go"],
+  "targets": {
+    "test": {},
+    "lint": {},
+    "tidy": {}
+  }
+}

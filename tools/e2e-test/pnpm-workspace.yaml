@@ -1,0 +1,19 @@
+# Supply-chain hardening for the e2e-test project. Mirrors the
+# settings in the repo-root pnpm-workspace.yaml — but those don't
+# trickle down here because tools/e2e-test has its own pnpm-lock.yaml
+# and isn't declared as a workspace member of the root. Keep these
+# in sync if you change the root file.
+#
+# The CI Jenkinsfile cd's into this directory and runs
+# `pnpm install --frozen-lockfile` for every Cypress shard, so
+# without these settings the e2e shards would silently bypass the
+# 48h release-age check.
+
+minimumReleaseAge: 2880 # 48h × 60min — see root file for rationale
+lockfileIncludeTarballUrl: true
+dangerouslyAllowAllBuilds: false
+strictPeerDependencies: true
+verifyStoreIntegrity: true
+allowBuilds:
+  cypress: true
+  esbuild: true

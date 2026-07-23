@@ -1,0 +1,12 @@
+{
+  "name": "image",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "pkg/image",
+  "tags": ["go"],
+  "targets": {
+    "test": {},
+    "lint": {},
+    "tidy": {}
+  }
+}

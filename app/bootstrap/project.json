@@ -1,0 +1,16 @@
+{
+  "name": "bootstrap",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "app/bootstrap",
+  "tags": ["tool", "go"],
+  "targets": {
+    "container": {},
+    "generate": {},
+    "build": {},
+    "serve": {},
+    "test": {},
+    "lint": {},
+    "tidy": {}
+  }
+}

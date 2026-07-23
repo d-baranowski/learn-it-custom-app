@@ -1,0 +1,39 @@
+{
+  "name": "@rpg/source",
+  "version": "0.0.0",
+  "license": "MIT",
+  "scripts": {},
+  "private": true,
+  "packageManager": "pnpm@11.1.1",
+  "devDependencies": {
+    "@nx-go/nx-go": "4.0.0-beta.0",
+    "@nx-tools/nx-container": "7.2.1",
+    "@nx/devkit": "22.6.5",
+    "@nx/eslint": "22.6.5",
+    "@nx/eslint-plugin": "22.6.5",
+    "@nx/js": "22.6.5",
+    "@nx/next": "22.6.5",
+    "@nx/playwright": "22.6.5",
+    "@nx/workspace": "22.6.5",
+    "@playwright/test": "^1.36.0",
+    "@types/node": "18.16.9",
+    "eslint-config-next": "^14.2.7",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "eslint-plugin-react-refresh": "^0.4.11",
+    "handlebars": "^4.7.8",
+    "nx": "22.6.5",
+    "oclif": "^4.13.16",
+    "prettier": "^2.8.8",
+    "ts-node": "10.9.1",
+    "typescript": "~5.4.2",
+    "typescript-eslint": "^8.3.0"
+  },
+  "dependencies": {
+    "@bufbuild/buf": "^1.40.1",
+    "fuse.js": "^7.0.0",
+    "react-number-format": "^5.4.2",
+    "tslib": "^2.3.0"
+  },
+  "nx": {}
+}

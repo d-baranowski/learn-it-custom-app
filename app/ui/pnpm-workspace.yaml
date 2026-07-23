@@ -1,0 +1,19 @@
+# Supply-chain hardening for the app/ui project. Mirrors the
+# settings in the repo-root pnpm-workspace.yaml — but those don't
+# trickle down here because app/ui has its own pnpm-lock.yaml and
+# isn't declared as a workspace member of the root. Keep these in
+# sync if you change the root file.
+
+minimumReleaseAge: 2880 # 48h × 60min — see root file for rationale
+lockfileIncludeTarballUrl: true
+dangerouslyAllowAllBuilds: false
+strictPeerDependencies: true
+verifyStoreIntegrity: true
+allowBuilds:
+  '@bufbuild/buf': true
+  '@swc/core': true
+  core-js: true
+  esbuild: true
+  protobufjs: true
+  sharp: true
+  unrs-resolver: true

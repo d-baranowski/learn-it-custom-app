@@ -1,0 +1,136 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "production": [
+      "default",
+      "!{projectRoot}/.eslintrc.json",
+      "!{projectRoot}/eslint.config.js",
+      "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+      "!{projectRoot}/tsconfig.spec.json",
+      "!{projectRoot}/jest.config.[jt]s",
+      "!{projectRoot}/src/test-setup.[jt]s",
+      "!{projectRoot}/test-setup.[jt]s"
+    ],
+    "sharedGlobals": ["{workspaceRoot}/go.work"]
+  },
+  "plugins": [
+    {
+      "plugin": "@nx/next/plugin",
+      "options": {
+        "startTargetName": "start",
+        "buildTargetName": "build",
+        "devTargetName": "dev",
+        "serveStaticTargetName": "serve-static"
+      }
+    },
+    {
+      "plugin": "@nx-go/nx-go",
+      "options": {
+        "analyzeSourceFiles": true,
+        "generateTargetName": "go-generate",
+        "testTargetName": "go-test-builtin",
+        "lintTargetName": "go-lint-builtin"
+      }
+    },
+    {
+      "plugin": "@nx/eslint/plugin",
+      "options": {
+        "targetName": "lint"
+      }
+    }
+  ],
+  "targetDefaults": {
+    "@nx/js:tsc": {
+      "cache": true,
+      "dependsOn": ["^build"],
+      "inputs": ["production", "^production"]
+    },
+    "generate": {
+      "cache": true,
+      "outputs": ["{projectRoot}/gen"],
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "rm -rf gen && buf generate && ./clean-gen.sh"
+      }
+    },
+    "migrate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{projectRoot}/db",
+        "parallel": false,
+        "commands": ["./up.sh"]
+      }
+    },
+    "build": {
+      "cache": true,
+      "dependsOn": ["generate"],
+      "executor": "@nx-go/nx-go:build",
+      "options": {
+        "main": "cmd/main.go"
+      }
+    },
+    "serve": {
+      "executor": "@nx-go/nx-go:serve",
+      "options": {
+        "main": "cmd/main.go"
+      }
+    },
+    "test": {
+      "cache": true,
+      "dependsOn": ["generate"],
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "go test -cover -coverprofile=coverage.out $(go list -e ./... | grep -v '/gen/')"
+      }
+    },
+    "lint": {
+      "cache": true,
+      "dependsOn": ["generate"],
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "go fmt $(go list -e ./... | grep -v '/gen/')"
+      }
+    },
+    "tidy": {
+      "cache": true,
+      "executor": "@nx-go/nx-go:tidy"
+    },
+    "container": {
+      "cache": true,
+      "executor": "@nx-tools/nx-container:build",
+      "options": {
+        "file": "docker/Dockerfile",
+        "platforms": ["linux/amd64", "linux/arm64"],
+        "build-args": ["APP_NAME={projectName}"],
+        "engine": "docker",
+        "push": true,
+        "metadata": {
+          "images": ["ghcr.io/inspiration-particle/utro-{projectName}"],
+          "tags": [
+            "type=schedule",
+            "type=ref,event=branch",
+            "type=ref,event=tag",
+            "type=ref,event=pr",
+            "type=semver,pattern={{version}}",
+            "type=semver,pattern={{major}}.{{minor}}",
+            "type=semver,pattern={{major}}",
+            "type=sha"
+          ]
+        }
+      },
+      "configurations": {
+        "local": {
+          "push": false,
+          "load": true,
+          "platforms": []
+        }
+      }
+    }
+  },
+  "defaultBase": "main",
+  "analytics": false
+}

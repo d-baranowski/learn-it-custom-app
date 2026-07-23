@@ -1,0 +1,359 @@
+syntax = "proto3";
+
+package core.v1;
+
+import "request/v1/base.proto";
+import "api/v1/generators.proto";
+import "api/v1/permissions.proto";
+import "core/v1/enums.proto";
+import "buf/validate/validate.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "app/core/gen/core/v1;corev1";
+
+service TherapyService {
+  option (api.v1.permissionKey) = "Therapy";
+
+  rpc Autocomplete(request.v1.AutocompleteRequest) returns (request.v1.AutocompleteResponse);
+  rpc Create(SaveTherapyRequest) returns (Therapy) {}
+  rpc Get(request.v1.GetRequest) returns (Therapy) {}
+  rpc List(request.v1.SelectRequest) returns (ListTherapyResponse) {}
+  rpc Update(SaveTherapyRequest) returns (Therapy) {}
+  rpc SoftDelete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+  rpc Delete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+
+  // Dry run to preview sessions that would be generated from a therapy's frequency configuration.
+  rpc DryRunGenerateSessions(DryRunGenerateSessionsRequest) returns (DryRunGenerateSessionsResponse) {}
+  // Confirm and generate sessions from a therapy's frequency configuration.
+  rpc GenerateSessions(GenerateSessionsRequest) returns (GenerateSessionsResponse) {}
+  // List future auto-generated sessions that would be deleted if frequency is changed.
+  rpc GetFutureGeneratedSessions(GetFutureGeneratedSessionsRequest) returns (GetFutureGeneratedSessionsResponse) {}
+  // Delete all future auto-generated sessions for a therapy.
+  rpc DeleteFutureGeneratedSessions(DeleteFutureGeneratedSessionsRequest) returns (DeleteFutureGeneratedSessionsResponse) {}
+  // Get the start datetime of the last existing session for a therapy.
+  rpc GetLastSessionDate(GetLastSessionDateRequest) returns (GetLastSessionDateResponse) {}
+}
+
+message Therapy {
+  option (api.v1.ts_grid) = true;
+
+  string id = 1[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  string therapistId = 2[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    },
+    filter: {
+      form: true,
+      formLabel: "Therapist",
+    }
+  }];
+  optional string therapistLabel = 3[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Therapist",
+      visible: true,
+    },
+    filter: {
+      form: false,
+      quick: false,
+    }
+  }];
+  string serviceId = 4[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    },
+    filter: {
+      form: true,
+      formLabel: "Service",
+    }
+  }];
+  optional string serviceLabel = 5[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Service",
+      visible: true,
+    },
+    filter: {
+      form: false,
+      quick: false,
+    }
+  }];
+  string displayName = 8[(api.v1.ts_grid_opts) = {
+    filter: {
+      form: true,
+      quick: true,
+      formLabel: "Display Name",
+      quickLabel: "Display Name",
+    }
+  }];
+  int64 startDate = 9[(api.v1.ts_grid_opts) = {
+    column: {
+      columnRendererType: "date",
+    },
+    filter: {
+      form: true,
+      type: "date",
+      formLabel: "Start Date",
+    }
+  }];
+  optional int64 endDate = 10[(api.v1.ts_grid_opts) = {
+    column: {
+      columnRendererType: "date",
+    },
+    filter: {
+      form: true,
+      type: "date",
+      formLabel: "End Date",
+    }
+  }];
+  repeated common.v1.DayOfWeek therapyDayOfWeeks = 15[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Days",
+      visible: true,
+      columnRendererType: "therapyDays",
+    },
+    filter: {
+      form: true,
+      quick: true,
+      formLabel: "Days",
+      quickLabel: "Days",
+    }
+  }];
+  int32 therapyDaysFirstDaySort = 16[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    },
+    filter: {
+      form: false,
+      quick: false,
+    }
+  }];
+  string therapyDaysSequenceSort = 17[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    },
+    filter: {
+      form: false,
+      quick: false,
+    }
+  }];
+  string sessionPrice = 11[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Session Price",
+      visible: true,
+    },
+    filter: {
+      form: true,
+      type: "number",
+      formLabel: "Session Price",
+    }
+  }];
+  int32 sessionDuration = 12[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Session Duration",
+      visible: true,
+    },
+    filter: {
+      form: true,
+      type: "number",
+      formLabel: "Session Duration",
+    }
+  }];
+  repeated SessionFrequencyEntry sessionFrequency = 13[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    },
+    filter: {
+      form: false,
+      quick: false,
+    }
+  }];
+  repeated string customerIds = 14[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    },
+    filter: {
+      form: true,
+      quick: true,
+      formLabel: "Customers",
+      quickLabel: "Customers",
+    }
+  }];
+  optional string customerLabels = 20[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Customers",
+      visible: true,
+      columnRendererType: "customers",
+    },
+    filter: {
+      form: false,
+      quick: false,
+    }
+  }];
+  optional int64 sessionsGeneratedAt = 18[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    },
+    filter: {
+      form: false,
+      quick: false,
+    }
+  }];
+  optional int64 sessionsGeneratedTill = 19[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    },
+    filter: {
+      form: false,
+      quick: false,
+    }
+  }];
+
+  int64 createdAt = 100;
+  string createdBy = 101;
+  optional string createdByLabel = 102;
+  optional int64 updatedAt = 103;
+  optional string updatedBy = 104;
+  optional string updatedByLabel = 105;
+  optional int64 deletedAt = 106;
+  optional string deletedBy = 107;
+  optional string deletedByLabel = 108;
+}
+
+message SaveTherapyRequest {
+  string id = 1;
+  string therapistId = 2[(buf.validate.field).string.min_len = 1];
+  string serviceId = 3[(buf.validate.field).string.min_len = 1];
+  string displayName = 5[(buf.validate.field).string.min_len = 1];
+  int64 startDate = 6[(buf.validate.field).int64.gt = 0];
+  optional int64 endDate = 7;
+  string sessionPrice = 8[(buf.validate.field).string.min_len = 1];
+  int32 sessionDuration = 9[(buf.validate.field).int32.gt = 0];
+  repeated SessionFrequencyEntry sessionFrequency = 10;
+  repeated string customerIds = 11[(buf.validate.field).repeated.min_items = 1];
+}
+
+message ListTherapyResponse {
+  repeated Therapy items = 1;
+  request.v1.PaginationResponse pagination = 2;
+}
+
+message SessionFrequencyEntry {
+  int32 every = 1;
+  repeated common.v1.DayOfWeek onDay = 2;
+  // Milliseconds from midnight (00:00) for when the session should start.
+  // Example: 9:30 → 34200000.
+  optional int64 startTimeMs = 3;
+  // Unit of time for frequency (week or month). Defaults to WEEK for backward compatibility.
+  common.v1.FrequencyUnit unit = 4;
+  // Whether sessions generated from this frequency are online (no room required).
+  optional bool isOnline = 5;
+  // Preferred room for in-person sessions generated from this frequency entry.
+  optional string roomId = 6;
+}
+
+// Request to preview sessions that would be generated from a therapy's frequency.
+message DryRunGenerateSessionsRequest {
+  string therapyId = 1[(buf.validate.field).string.min_len = 1];
+  // Lower bound for generation window as date string (YYYY-MM-DD).
+  // Defaults to today if empty.
+  string generateFrom = 2;
+  // Upper bound for generation window as date string (YYYY-MM-DD).
+  // The range generateFrom..generateUntil must be at most 12 months.
+  string generateUntil = 3[(buf.validate.field).string.min_len = 10];
+}
+
+// A preview of a single session that would be generated.
+message SessionPreview {
+  // Session date in YYYY-MM-DD format.
+  string date = 1;
+  // Session start time in HH:MM format (24h).
+  string startTime = 2;
+  optional string roomId = 3;
+  optional string roomLabel = 4;
+  bool isOnline = 5;
+  string therapySessionFrequencyRef = 6;
+  // True when the preferred room is occupied at this time slot.
+  bool hasRoomClash = 7;
+  // True when an identical session (same therapy, same start time) already exists in the database.
+  // Sessions with this flag should be excluded from generation by default.
+  bool alreadyExists = 8;
+  // Session end time in HH:MM format (24h).
+  string endTime = 9;
+}
+
+// Per-session override applied before persisting generated sessions.
+// Identified by the session's zero-based index in the preview list.
+message SessionOverride {
+  // Zero-based index matching the position in the dry-run preview list.
+  int32 index = 1;
+  // Override date (YYYY-MM-DD). Omit to keep the generated value.
+  optional string date = 2;
+  // Override start time (HH:MM). Omit to keep the generated value.
+  optional string startTime = 3;
+  // Override room ID. Omit to keep the generated value.
+  optional string roomId = 4;
+  // Override online flag. Omit to keep the generated value.
+  optional bool isOnline = 5;
+  // Override end time (HH:MM). Omit to keep the generated value.
+  optional string endTime = 6;
+}
+
+// Response containing a preview of sessions that would be generated.
+message DryRunGenerateSessionsResponse {
+  repeated SessionPreview sessions = 1;
+  int32 count = 2;
+}
+
+// Request to generate sessions from a therapy's frequency configuration.
+message GenerateSessionsRequest {
+  string therapyId = 1[(buf.validate.field).string.min_len = 1];
+  // Lower bound for generation window as date string (YYYY-MM-DD).
+  // Defaults to today if empty.
+  string generateFrom = 2;
+  // Upper bound for generation window as date string (YYYY-MM-DD).
+  // The range generateFrom..generateUntil must be at most 12 months.
+  string generateUntil = 3[(buf.validate.field).string.min_len = 10];
+  // Indices of sessions (from the dry-run preview) to exclude from generation.
+  repeated int32 excludedIndices = 4;
+  // Per-session field overrides (date/time/room/online) keyed by preview index.
+  repeated SessionOverride sessionOverrides = 5;
+}
+
+// Response after generating sessions.
+message GenerateSessionsResponse {
+  int32 generatedCount = 1;
+}
+
+// Request to get future auto-generated sessions for a therapy.
+message GetFutureGeneratedSessionsRequest {
+  string therapyId = 1[(buf.validate.field).string.min_len = 1];
+}
+
+// Response containing future auto-generated sessions.
+message GetFutureGeneratedSessionsResponse {
+  repeated SessionPreview sessions = 1;
+  int32 count = 2;
+}
+
+// Request to delete future auto-generated sessions for a therapy.
+message DeleteFutureGeneratedSessionsRequest {
+  string therapyId = 1[(buf.validate.field).string.min_len = 1];
+}
+
+// Response after deleting future auto-generated sessions.
+message DeleteFutureGeneratedSessionsResponse {
+  int32 deletedCount = 1;
+}
+
+// Request to get the last session date for a therapy.
+message GetLastSessionDateRequest {
+  string therapyId = 1[(buf.validate.field).string.min_len = 1];
+}
+
+// Response containing the last session's date (YYYY-MM-DD), or absent if no sessions exist.
+message GetLastSessionDateResponse {
+  optional string lastSessionDate = 1;
+}

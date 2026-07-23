@@ -1,0 +1,20 @@
+# Air configuration for app/gateway
+# Docs: https://github.com/air-verse/air
+
+root = "."
+
+tmp_dir = "tmp"
+
+[build]
+  # Build to a stable binary path so Air can restart it.
+  cmd = "go build -o ./tmp/gateway ./cmd/main.go"
+  bin = "./tmp/gateway"
+  delay = 200
+  include_ext = ["go", "mod", "sum", "proto"]
+  # Note: gen/ is excluded to avoid rebuild spam during code generation.
+  exclude_dir = ["tmp", "vendor", ".git"]
+  stop_on_error = true
+
+[log]
+  time = true
+

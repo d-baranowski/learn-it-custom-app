@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package core.v1;
+
+import "api/v1/permissions.proto";
+import "buf/validate/validate.proto";
+
+option go_package = "app/core/gen/core/v1;corev1";
+
+service FinancialDashboardService {
+  option (api.v1.permissionKey) = "Transaction";
+
+  rpc GetFinancialOverview(GetFinancialOverviewRequest) returns (GetFinancialOverviewResponse);
+}
+
+message GetFinancialOverviewRequest {
+  // The reference month in MM-YYYY format (e.g., "01-2026")
+  // Will fetch 8 months back and 3 months forward from this month
+  string referenceMonth = 1 [(buf.validate.field).string = {
+    pattern: "^(0[1-9]|1[0-2])-[0-9]{4}$"
+  }];
+}
+
+message GetFinancialOverviewResponse {
+  repeated MonthlyFinancialData months = 1;
+}
+
+message MonthlyFinancialData {
+  // Month identifier in MM-YYYY format (e.g., "01-2026")
+  string month = 1;
+  
+  // Month label (e.g., "Jan 2026")
+  string monthLabel = 2;
+  
+  // Total income for the month
+  double totalIncome = 3;
+  
+  // Breakdown by therapist
+  repeated TherapistIncome therapistIncomes = 4;
+  
+  // Transactions (expenses and other income)
+  repeated TransactionSummary transactions = 5;
+}
+
+message TherapistIncome {
+  string therapistId = 1;
+  string therapistName = 2;
+  double income = 3;
+  int32 sessionCount = 4;
+  optional string therapistColor = 5;
+  optional string therapistAbbreviation = 6;
+}
+
+message TransactionSummary {
+  string transactionId = 1;
+  string displayName = 2;
+  double amount = 3;
+  int64 incurredAt = 4;
+  optional string recurringCashflowId = 5;
+  optional string recurringCashflowName = 6;
+}

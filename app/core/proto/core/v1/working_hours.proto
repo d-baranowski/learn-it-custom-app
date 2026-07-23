@@ -1,0 +1,102 @@
+syntax = "proto3";
+
+package core.v1;
+
+import "request/v1/base.proto";
+import "api/v1/generators.proto";
+import "api/v1/permissions.proto";
+import "buf/validate/validate.proto";
+import "core/v1/enums.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "app/core/gen/core/v1;corev1";
+
+service WorkingHoursService {
+  option (api.v1.permissionKey) = "WorkingHours";
+
+  rpc Autocomplete(request.v1.AutocompleteRequest) returns (request.v1.AutocompleteResponse);
+  rpc Create(SaveWorkingHoursRequest) returns (WorkingHours) {}
+  rpc Get(request.v1.GetRequest) returns (WorkingHours) {}
+  rpc List(request.v1.SelectRequest) returns (ListWorkingHoursResponse) {}
+  rpc ReplaceTherapistWeek(ReplaceTherapistWeekRequest) returns (ReplaceTherapistWeekResponse) {}
+  rpc Update(SaveWorkingHoursRequest) returns (WorkingHours) {}
+  rpc SoftDelete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+  rpc Delete(request.v1.DeleteRequest) returns (request.v1.DeleteResponse);
+}
+
+message WorkingHours {
+  option (api.v1.ts_grid) = true;
+
+  string id = 1[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false,
+    }
+  }];
+  string therapistId = 2[(api.v1.ts_grid_opts) = {
+    column: {
+      visible: false
+    },
+    filter: {
+      form: true,
+      formLabel: "Therapist",
+    }
+  }];
+  optional string therapistLabel = 3;
+  optional string therapistAbbreviationLabel = 8;
+  common.v1.DayOfWeek dayOfWeek = 4[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Day",
+      visible: true
+    }
+  }];
+  string fromTime = 5[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "From",
+      visible: true
+    }
+  }];
+  string tillTime = 6[(api.v1.ts_grid_opts) = {
+    column: {
+      header: "Till",
+      visible: true
+    }
+  }];
+
+  int64 createdAt = 100;
+  string createdBy = 101;
+  optional string createdByLabel = 102;
+  optional int64 updatedAt = 103;
+  optional string updatedBy = 104;
+  optional string updatedByLabel = 105;
+  optional int64 deletedAt = 106;
+  optional string deletedBy = 107;
+  optional string deletedByLabel = 108;
+}
+
+message SaveWorkingHoursRequest {
+  string id = 1;
+  string therapistId = 2[(buf.validate.field).string.min_len = 1];
+  common.v1.DayOfWeek dayOfWeek = 4[(buf.validate.field).enum = {defined_only: true, not_in: [0]}];
+  string fromTime = 5[(buf.validate.field).string.min_len = 1];
+  string tillTime = 6[(buf.validate.field).string.min_len = 1];
+}
+
+message WorkingHoursWeekSlot {
+  common.v1.DayOfWeek dayOfWeek = 1[(buf.validate.field).enum = {defined_only: true, not_in: [0]}];
+  string fromTime = 2[(buf.validate.field).string.min_len = 1];
+  string tillTime = 3[(buf.validate.field).string.min_len = 1];
+}
+
+message ReplaceTherapistWeekRequest {
+  string therapistId = 1[(buf.validate.field).string.min_len = 1];
+  repeated WorkingHoursWeekSlot slots = 2;
+}
+
+message ReplaceTherapistWeekResponse {
+  repeated WorkingHours items = 1;
+}
+
+message ListWorkingHoursResponse {
+  repeated WorkingHours items = 1;
+  request.v1.PaginationResponse pagination = 2;
+}

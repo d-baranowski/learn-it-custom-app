@@ -1,0 +1,538 @@
+/* Remove if fonts are not used */
+@import '@fontsource/inter/100.css';
+@import '@fontsource/inter/200.css';
+@import '@fontsource/inter/300.css';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/inter/800.css';
+@import '@fontsource/inter/900.css';
+@import '@fontsource/roboto-mono/300.css';
+@import '@fontsource/roboto-mono/400.css';
+
+/* Remove if simplebar is not used */
+@import 'simplebar-react/dist/simplebar.min.css';
+
+/* Remove if slick-carousel is not used */
+/*@import 'slick-carousel/slick/slick.css';*/
+/*@import 'slick-carousel/slick/slick-theme.css';*/
+
+/* Remove if react-quill is not used */
+/*@import 'react-quill/dist/quill.snow.css';*/
+
+/* Remove if react-draft-wysiwyg is not used */
+/*@import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';*/
+
+/* Remove if mapbox is not used */
+/*@import 'mapbox-gl/dist/mapbox-gl.css';*/
+
+/* https://github.com/mui/material-ui/issues/21625#issuecomment-1059816517 */
+/* If we don't use this forms will jump all over the place when validation errors appear */
+.MuiFormHelperText-root.Mui-error {
+  position: absolute;
+  top: 100%;
+  overflow: hidden;
+  height: 15px;
+  width: 100%;
+  /* TODO add toast errors to every form and hide error text or alternatively devise some css to make error text appear as some form of tooltip without affecting form layout */
+}
+
+p.MuiFormHelperText-root.Mui-error  {
+  display: none;
+}
+
+.MuiFormControl-root:has(input[readonly]) {
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.MuiAutocomplete-root:has(input[readonly]) {
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.MuiFormControl-root:has(input[aria-readonly=true]) * {
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.MuiAutocomplete-root:has(input[aria-readonly=true]) {
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+/* React Big Calendar */
+.rbc-time-column.rbc-today {
+  background-color: transparent;
+}
+
+.rpg-calendar-loading.rbc-calendar .rbc-time-view {
+  display: none;
+}
+
+/* Year view: session-count heatmap */
+.rpg-year-view {
+  background-color: #f4f3ef;
+  --heat-1: #ece5f8;
+  --heat-2: #d3c6f0;
+  --heat-3: #b49fe6;
+  --heat-4: #9575cd;
+  --heat-5: #6d40c4;
+}
+
+.rpg-year-view .rpg-year-legend {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 10px;
+  padding: 12px 20px;
+  margin-bottom: 16px;
+}
+.rpg-year-view .rpg-year-legend-scale {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rpg-year-view .rpg-year-legend-label {
+  font-size: 0.8125rem;
+  color: #6b6b6b;
+}
+.rpg-year-view .rpg-year-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  display: inline-block;
+}
+.rpg-year-view .rpg-year-swatch.rpg-year-heat-1 { background-color: var(--heat-1); }
+.rpg-year-view .rpg-year-swatch.rpg-year-heat-2 { background-color: var(--heat-2); }
+.rpg-year-view .rpg-year-swatch.rpg-year-heat-3 { background-color: var(--heat-3); }
+.rpg-year-view .rpg-year-swatch.rpg-year-heat-4 { background-color: var(--heat-4); }
+.rpg-year-view .rpg-year-swatch.rpg-year-heat-5 { background-color: var(--heat-5); }
+.rpg-year-view .rpg-year-today-swatch {
+  background: transparent;
+  border: 2px solid var(--heat-5);
+}
+.rpg-year-view .rpg-year-total {
+  margin-left: auto;
+  font-size: 0.95rem;
+  color: #2b2b2b;
+}
+
+.rpg-year-view .rpg-year-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+.rpg-year-view .rpg-year-month-card {
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 12px;
+  padding: 14px 16px 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.rpg-year-view .rpg-year-month-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.rpg-year-view .rpg-year-month-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1f1f1f;
+}
+.rpg-year-view .rpg-year-month-total {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #9a9a9a;
+}
+
+.rpg-year-view .react-calendar {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  line-height: 1;
+}
+.rpg-year-view .react-calendar__month-view__weekdays {
+  margin-bottom: 4px;
+}
+.rpg-year-view .react-calendar__month-view__weekdays__weekday {
+  text-align: center;
+  padding: 2px 0;
+}
+.rpg-year-view .react-calendar__month-view__weekdays__weekday abbr {
+  text-decoration: none;
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: #b0b0b0;
+  cursor: default;
+}
+.rpg-year-view .react-calendar__tile {
+  padding: 0;
+  aspect-ratio: 1 / 1;
+  border: 2px solid transparent;
+  background: none;
+  background-clip: padding-box;
+  border-radius: 7px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #3a3550;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rpg-year-view .react-calendar__tile:enabled:hover,
+.rpg-year-view .react-calendar__tile:enabled:focus {
+  background-color: #e9e3f7;
+}
+.rpg-year-view .react-calendar__tile.rpg-year-heat-1 { background-color: var(--heat-1); }
+.rpg-year-view .react-calendar__tile.rpg-year-heat-2 { background-color: var(--heat-2); }
+.rpg-year-view .react-calendar__tile.rpg-year-heat-3 { background-color: var(--heat-3); }
+.rpg-year-view .react-calendar__tile.rpg-year-heat-4 { background-color: var(--heat-4); color: #fff; }
+.rpg-year-view .react-calendar__tile.rpg-year-heat-5 { background-color: var(--heat-5); color: #fff; }
+.rpg-year-view .react-calendar__tile--now {
+  border-color: var(--heat-5);
+}
+
+/* Event Styles */
+.rbc-event,
+.rbc-background-event {
+  z-index: 2;
+  padding: 0px !important;
+  border: none !important;
+}
+
+/* Day/week: the white CustomEvent card defines the rounded shape, so the
+   default RBC event background must not peek behind its rounded corners. */
+.rpg-calendar .rbc-time-view .rbc-event {
+  background-color: transparent;
+  border-radius: 8px;
+}
+
+
+.rbc-event-label {
+  display: none !important;
+}
+
+/* Month grid redesign */
+.rpg-calendar .rbc-month-view {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Weekday header row: left-aligned, muted, capitalized */
+.rpg-calendar .rbc-month-header .rbc-header {
+  text-align: left;
+  padding: 12px 10px;
+  font-weight: 500;
+  font-size: 0.8125rem;
+  color: rgba(0, 0, 0, 0.5);
+  text-transform: capitalize;
+  border-bottom: none;
+}
+
+/* Day-number row: number left, count badge right */
+.rpg-calendar .rbc-month-view .rbc-date-cell {
+  text-align: left;
+  padding: 6px 8px 2px;
+}
+.rpg-calendar .rbc-month-view .rbc-date-cell .rpg-month-date-header {
+  width: 100%;
+}
+
+/* Cell backgrounds */
+.rpg-calendar .rbc-month-view .rbc-day-bg.rpg-month-day-has-events {
+  background-color: rgba(214, 178, 84, 0.1);
+}
+.rpg-calendar .rbc-month-view .rbc-today {
+  background-color: transparent;
+}
+.rpg-calendar .rbc-month-view .rbc-today.rpg-month-day-has-events {
+  background-color: rgba(214, 178, 84, 0.1);
+}
+.rpg-calendar .rbc-month-view .rbc-off-range-bg {
+  background-color: transparent;
+}
+
+/* Compact event rows */
+.rpg-calendar .rbc-month-view .rbc-event {
+  background-color: transparent;
+  color: inherit;
+  font-size: 0.8125rem;
+  border-radius: 4px;
+}
+/* No persistent selected background in month view: a single click opens the
+   session immediately, so a lingering highlight just reads as a stuck hover. */
+.rpg-calendar .rbc-month-view .rbc-event.rbc-selected {
+  background-color: transparent;
+}
+.rpg-calendar .rbc-month-view .rbc-event:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+.rpg-calendar .rbc-month-view .rbc-row-segment {
+  padding: 0 6px 2px;
+}
+
+/* Open-session icon: revealed on row hover to keep dense cells clean */
+.rpg-calendar .rbc-month-view .rpg-month-event-open {
+  opacity: 0;
+  color: rgba(0, 0, 0, 0.55);
+  transition: opacity 120ms ease;
+}
+.rpg-calendar .rbc-month-view .rpg-month-event:hover .rpg-month-event-open,
+.rpg-calendar .rbc-month-view .rpg-month-event-open:focus-visible {
+  opacity: 1;
+}
+
+/* Hide DnD resize anchors in month view (duration resize is meaningless
+   at day granularity, and the anchors show through the transparent rows) */
+.rpg-calendar .rbc-month-view .rbc-addons-dnd-resize-ew-anchor,
+.rpg-calendar .rbc-month-view .rbc-addons-dnd-resize-ns-anchor {
+  display: none;
+}
+
+/* "+ N more" overflow link */
+.rpg-calendar .rbc-month-view .rbc-show-more {
+  color: #6d40c4;
+  background-color: transparent;
+  font-weight: 500;
+  font-size: 0.8125rem;
+  margin-left: 6px;
+}
+.rpg-calendar .rbc-month-view .rbc-show-more:hover {
+  color: #58309f;
+  text-decoration: underline;
+}
+
+/* React Calendar */
+.rbc-calendar .react-calendar__navigation > button:disabled {
+  background-color: white !important;
+  color: black;
+}
+
+@keyframes pulse{
+  25%  {transform: scale(1);}
+  75%  {transform: scale(1.2);}
+}
+
+/* Hack to have the time gutter align */
+.rbc-label.rbc-time-header-gutter,
+.rpg-calendar .rbc-time-gutter {
+  min-width: 62px !important;
+  max-width: 62px !important;
+  width: 62px !important;
+}
+
+.rbc-time-gutter,
+.rbc-header-gutter {
+  flex: none;
+}
+
+/* Header/body column alignment: a space-consuming scrollbar in the scrolling
+   body (absent from the header) drifts the body columns left of the header
+   dividers once it appears (e.g. on zoom). Force a fixed-width scrollbar in the
+   body on every platform and reserve that exact width on the header, so the two
+   stay locked together regardless of the OS scrollbar style. */
+.rpg-calendar .rbc-time-content {
+  overflow-y: scroll;
+}
+.rpg-calendar .rbc-time-content::-webkit-scrollbar {
+  width: 8px;
+}
+.rpg-calendar .rbc-time-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+.rpg-calendar .rbc-time-content::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.22);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.rpg-calendar .rbc-time-content::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.35);
+}
+/* Columns are fixed-width and overflow horizontally (they scroll in sync), so
+   they need no scrollbar compensation. RBC's own margin-right on the header
+   only squeezes its flex area, drifting the header dividers off the body ones.
+   Neutralise it; the fixed column widths keep header and body locked. */
+.rpg-calendar .rbc-time-header,
+.rpg-calendar .rbc-time-header.rbc-overflowing {
+  margin-right: 0 !important;
+}
+
+/* Hour labels: smaller, muted, medium weight to match the day-view design.
+   Anchor the label to the group's top border (the hour gridline) and centre
+   it on that line, rather than letting it hang inside the first sub-slot. */
+.rpg-calendar .rbc-time-gutter .rbc-timeslot-group {
+  position: relative;
+}
+.rpg-calendar .rbc-time-gutter .rbc-label {
+  position: absolute;
+  top: 0;
+  right: 8px;
+  transform: translateY(-50%);
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.45);
+  padding: 0 6px;
+  /* Sit centred on the hour rule; the white mask keeps the rule visible
+     across the gutter without it striking through the number. */
+  background: #ffffff;
+}
+/* The first hour sits flush against the header, so centring it on the line
+   clips its top half. Anchor it just below its gridline instead. */
+.rpg-calendar .rbc-time-gutter .rbc-timeslot-group:first-child .rbc-label {
+  transform: none;
+  top: 1px;
+}
+
+
+:is(.rpg-calendar, .rpg-calendar-loading) .rbc-toolbar.rbc-toolbar-redesign {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+:is(.rpg-calendar, .rpg-calendar-loading) .rbc-toolbar-row-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+:is(.rpg-calendar, .rpg-calendar-loading) .rbc-toolbar-row-filters {
+  display: flex;
+  width: 100%;
+}
+
+:is(.rpg-calendar, .rpg-calendar-loading) .rbc-toolbar-row-filters .rbc-calendar-filter-row {
+  flex: 1;
+  min-width: 0;
+}
+
+:is(.rpg-calendar, .rpg-calendar-loading) .rbc-btn-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+:is(.rpg-calendar, .rpg-calendar-loading) .rbc-btn-group > button {
+  height: 36px;
+  padding: 5px 10px;
+  border: 0.5px solid #C8C5B9;
+  border-radius: 6px;
+  background: #FFFFFF;
+  color: #2C2C2A;
+  box-shadow: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+:is(.rpg-calendar, .rpg-calendar-loading) .rbc-btn-group > button + button {
+  margin-left: 0;
+}
+
+:is(.rpg-calendar, .rpg-calendar-loading) .rbc-btn-group > button:not(:disabled):hover,
+:is(.rpg-calendar, .rpg-calendar-loading) .rbc-btn-group > button:not(:disabled):focus {
+  background: #F6F4EE;
+  border-color: #C8C5B9;
+}
+
+:is(.rpg-calendar, .rpg-calendar-loading) .rbc-btn-group > button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+:is(.rpg-calendar, .rpg-calendar-loading) .rbc-nav-group {
+  display: inline-flex;
+  align-items: center;
+  border: 0.5px solid #C8C5B9;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+:is(.rpg-calendar, .rpg-calendar-loading) .rbc-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  width: 36px;
+  padding: 0;
+  border: none;
+  background: #FFFFFF;
+  color: #2C2C2A;
+  cursor: pointer;
+}
+
+:is(.rpg-calendar, .rpg-calendar-loading) .rbc-nav-btn:hover {
+  background: #F6F4EE;
+}
+
+:is(.rpg-calendar, .rpg-calendar-loading) .rbc-nav-btn + .rbc-nav-btn {
+  border-left: 0.5px solid #C8C5B9;
+}
+
+:is(.rpg-calendar, .rpg-calendar-loading) .rbc-toolbar-label {
+  flex: 1;
+  margin: 0;
+  font-weight: 500;
+  color: #2C2C2A;
+  text-align: left;
+  padding-left: 4px;
+}
+
+:is(.rpg-calendar, .rpg-calendar-loading) .rbc-toolbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+:is(.rpg-calendar, .rpg-calendar-loading) .rbc-view-dropdown-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 5px 8px 5px 12px;
+  border: 0.5px solid #C8C5B9;
+  border-radius: 6px;
+  background: #FFFFFF;
+  color: #2C2C2A;
+  cursor: pointer;
+  font-size: inherit;
+}
+
+:is(.rpg-calendar, .rpg-calendar-loading) .rbc-view-dropdown-btn:hover {
+  background: #F6F4EE;
+}
+
+:is(.rpg-calendar, .rpg-calendar-loading) .rbc-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  width: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #5F5E5A;
+  cursor: pointer;
+}
+
+:is(.rpg-calendar, .rpg-calendar-loading) .rbc-refresh-btn:hover {
+  background: #F6F4EE;
+  color: #2C2C2A;
+}
+
+/* End React Big Calendar */
+
+/* Keep full radius on every calendar toolbar button (RBC resets middle corners). */
+:is(.rpg-calendar, .rpg-calendar-loading) .rbc-btn-group > button,
+:is(.rpg-calendar, .rpg-calendar-loading) .rbc-btn-group > button:first-child:not(:last-child),
+:is(.rpg-calendar, .rpg-calendar-loading) .rbc-btn-group > button:last-child:not(:first-child),
+:is(.rpg-calendar, .rpg-calendar-loading) .rbc-btn-group > button:not(:first-child):not(:last-child) {
+  border-radius: 6px !important;
+}

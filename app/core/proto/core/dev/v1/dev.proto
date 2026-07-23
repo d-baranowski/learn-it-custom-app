@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package core.dev.v1;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "app/core/gen/core/dev/v1;devv1";
+
+service DevService {
+  rpc ResetDatabase(google.protobuf.Empty) returns (ResetDatabaseResponse) {}
+}
+
+message ResetDatabaseResponse {
+  bool success = 1;
+  string message = 2;
+}
