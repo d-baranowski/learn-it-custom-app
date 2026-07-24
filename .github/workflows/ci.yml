@@ -1,0 +1,38 @@
+# Trigger the Jenkins CI island (Shape A): GitHub Actions is only the front-end;
+# the real build runs on Jenkins' Spot agents. This is the ONE pipeline artifact
+# that lives in this repo — orchestration + build steps live in the infra repo /
+# the utro-ci Jenkins shared library.
+#
+# Repo secrets are Terraform-managed (infra github/ root, wire_jenkins_ci_secrets):
+#   JENKINS_URL        https://jenkins-aws.inspi.cloud
+#   JENKINS_GWT_TOKEN  Generic Webhook Trigger token (matches Jenkins' gwt-token cred)
+#
+# The POST hits the Cloudflare Access *bypass* path, authed by ?token= — no login.
+# Jenkins' utro-pr job extracts sha/branch from the body and chains
+# utro-pr -> utro-build-images -> utro-e2e, posting commit statuses back to this PR.
+name: CI (trigger Jenkins)
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  trigger-jenkins:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Kick off Jenkins utro-pr
+        env:
+          JENKINS_URL: ${{ secrets.JENKINS_URL }}
+          GWT_TOKEN: ${{ secrets.JENKINS_GWT_TOKEN }}
+          # PR head sha on pull_request, the pushed sha on push-to-main.
+          SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: |
+          set -euo pipefail
+          code=$(curl -sS -o /tmp/resp.json -w '%{http_code}' -X POST \
+            "${JENKINS_URL%/}/generic-webhook-trigger/invoke?token=${GWT_TOKEN}" \
+            -H 'Content-Type: application/json' \
+            -d "{\"sha\":\"${SHA}\",\"branch\":\"${BRANCH}\"}")
+          echo "Jenkins responded ${code}:"; cat /tmp/resp.json; echo
+          test "${code}" = "200"

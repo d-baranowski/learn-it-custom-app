@@ -1,0 +1,35 @@
+# Build context slimming for the Go service images (docker/Dockerfile*, context = repo root).
+# Without this the CI context was ~1.96 GB (node_modules + caches) → minutes of transfer + COPY.
+# The Go builds need only Go source, go.work*, every module's go.mod/go.sum, and the buf-
+# generated gen/ dirs — never node_modules or the JS/Next build artifacts.
+
+# VCS / CI
+.git
+.github
+
+# JS deps + build/tooling caches (Go builds never touch these; the ui image runs its
+# own pnpm install in a build stage and copies node_modules from there, not from context)
+**/node_modules
+.pnpm-store
+.nx
+**/.next
+**/dist
+**/build
+**/out
+**/coverage
+**/test-output
+**/tmp
+
+# Editor / OS / secrets
+.idea
+.vscode
+**/*.log
+.DS_Store
+.env
+.env.*
+
+# Large runtime data + stale lock not used by the builds
+location.json
+package-lock.json
+
+# DO NOT exclude (required by go build): gen/  go.work  go.work.sum  **/go.mod  **/go.sum  app/**  pkg/**
