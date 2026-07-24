@@ -1,7 +1,10 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "namedInputs": {
-    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "default": [
+      "{projectRoot}/**/*",
+      "sharedGlobals"
+    ],
     "production": [
       "default",
       "!{projectRoot}/.eslintrc.json",
@@ -12,7 +15,9 @@
       "!{projectRoot}/src/test-setup.[jt]s",
       "!{projectRoot}/test-setup.[jt]s"
     ],
-    "sharedGlobals": ["{workspaceRoot}/go.work"]
+    "sharedGlobals": [
+      "{workspaceRoot}/go.work"
+    ]
   },
   "plugins": [
     {
@@ -43,12 +48,19 @@
   "targetDefaults": {
     "@nx/js:tsc": {
       "cache": true,
-      "dependsOn": ["^build"],
-      "inputs": ["production", "^production"]
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "production",
+        "^production"
+      ]
     },
     "generate": {
       "cache": true,
-      "outputs": ["{projectRoot}/gen"],
+      "outputs": [
+        "{projectRoot}/gen"
+      ],
       "executor": "nx:run-commands",
       "options": {
         "cwd": "{projectRoot}",
@@ -60,12 +72,16 @@
       "options": {
         "cwd": "{projectRoot}/db",
         "parallel": false,
-        "commands": ["./up.sh"]
+        "commands": [
+          "./up.sh"
+        ]
       }
     },
     "build": {
       "cache": true,
-      "dependsOn": ["generate"],
+      "dependsOn": [
+        "generate"
+      ],
       "executor": "@nx-go/nx-go:build",
       "options": {
         "main": "cmd/main.go"
@@ -79,7 +95,9 @@
     },
     "test": {
       "cache": true,
-      "dependsOn": ["generate"],
+      "dependsOn": [
+        "generate"
+      ],
       "executor": "nx:run-commands",
       "options": {
         "cwd": "{projectRoot}",
@@ -88,7 +106,9 @@
     },
     "lint": {
       "cache": true,
-      "dependsOn": ["generate"],
+      "dependsOn": [
+        "generate"
+      ],
       "executor": "nx:run-commands",
       "options": {
         "cwd": "{projectRoot}",
@@ -104,12 +124,19 @@
       "executor": "@nx-tools/nx-container:build",
       "options": {
         "file": "docker/Dockerfile",
-        "platforms": ["linux/amd64", "linux/arm64"],
-        "build-args": ["APP_NAME={projectName}"],
+        "platforms": [
+          "linux/amd64",
+          "linux/arm64"
+        ],
+        "build-args": [
+          "APP_NAME={projectName}"
+        ],
         "engine": "docker",
         "push": true,
         "metadata": {
-          "images": ["ghcr.io/inspiration-particle/utro-{projectName}"],
+          "images": [
+            "ghcr.io/inspiration-particle/utro-{projectName}"
+          ],
           "tags": [
             "type=schedule",
             "type=ref,event=branch",
@@ -132,5 +159,6 @@
     }
   },
   "defaultBase": "main",
-  "analytics": false
+  "analytics": false,
+  "nxCloudId": "6a63312fdfc9c49933670191"
 }
