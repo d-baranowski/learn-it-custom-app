@@ -30,6 +30,12 @@
         "cwd": "{workspaceRoot}/app/core-event",
         "command": "USER=postgres ENV_FILE=./.env.dev go run ./cmd/ -migrate"
       }
+    },
+
+    "container": {
+      "options": {
+        "file": "docker/Dockerfile.core-event"
+      }
     }
   }
 }
