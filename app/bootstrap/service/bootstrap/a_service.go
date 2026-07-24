@@ -65,11 +65,6 @@ func (s *service) Run(ctx context.Context) error {
 		return err
 	}
 
-	if err := s.grantAppAccess(ctx); err != nil {
-		s.log.Error("failed to grant app schema access", zap.Error(err))
-		return err
-	}
-
 	if err := s.coreEventCdc(ctx); err != nil {
 		s.log.Error("failed to restore core-event CDC wiring", zap.Error(err))
 		return err
