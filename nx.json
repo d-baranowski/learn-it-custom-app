@@ -134,7 +134,7 @@
         "push": true,
         "metadata": {
           "images": [
-            "ghcr.io/inspiration-particle/utro-{projectName}"
+            "277265293752.dkr.ecr.eu-central-1.amazonaws.com/utro-{projectName}"
           ],
           "tags": [
             "type=schedule",
