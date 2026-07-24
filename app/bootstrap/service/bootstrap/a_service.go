@@ -65,8 +65,8 @@ func (s *service) Run(ctx context.Context) error {
 		return err
 	}
 
-	if err := s.rlsEnabledRole(ctx); err != nil {
-		s.log.Error("failed to create app user", zap.Error(err))
+	if err := s.grantAppAccess(ctx); err != nil {
+		s.log.Error("failed to grant app schema access", zap.Error(err))
 		return err
 	}
 

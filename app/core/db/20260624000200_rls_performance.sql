@@ -26,6 +26,13 @@ RETURNS boolean AS $$
 DECLARE
     curr_user text;
 BEGIN
+    -- Aurora/RDS grants no role BYPASSRLS, so the repository "SkipRLS" service
+    -- paths (e.g. the pre-auth login lookup) set core.bypass='on' for the
+    -- transaction to run without row filtering. Honour it here so every RLS
+    -- policy — all of which gate on core.can_*() — passes. Fail-closed: unset or
+    -- any other value means normal enforcement.
+    IF current_setting('core.bypass', true) = 'on' THEN RETURN true; END IF;
+
     curr_user := core.current_user_id();
     IF curr_user IS NULL THEN RETURN false; END IF;
 

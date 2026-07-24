@@ -168,6 +168,12 @@ $$
 declare
     has_permission boolean;
 begin
+    -- Aurora has no BYPASSRLS: honour the core.bypass session flag set by the
+    -- repository SkipRLS paths (rls_performance.sql redefines this function with
+    -- the same guard — that optimized version is the one in effect). Fail-closed
+    -- when unset.
+    if current_setting('core.bypass', true) = 'on' then return true; end if;
+
     -- First check if user has 'All' permission with 'All' ability (admin override)
     -- Query user_permission_view directly for real-time permission resolution
     select exists(
@@ -250,9 +256,13 @@ begin
 end;
 $$ language plpgsql security definer stable;
 
--- Enable RLS for user table
+-- Enable RLS for user table.
+-- No FORCE: the table owner (the migrator role) must be able to seed and
+-- administer users, and on Aurora/RDS no role can hold BYPASSRLS. Application
+-- traffic connects as a NON-owner role, so it is still fully subject to the
+-- policies below; only the owner (migrations/bootstrap) bypasses them — the
+-- pattern AWS recommends for RLS multi-tenancy on RDS.
 alter table core.user enable row level security;
-alter table core.user force row level security;
 
 -- Scope: 2=ALL, 1=OWN
 create policy user_select_policy on core.user
@@ -284,9 +294,9 @@ create policy user_delete_policy on core.user
     or (id = core.current_user_id() and core.can_delete('User', 1))
   );
 
--- Enable RLS for user_role table
+-- Enable RLS for user_role table. No FORCE (see core.user above): owner seeds,
+-- non-owner app traffic stays fully policy-enforced.
 alter table core.user_role enable row level security;
-alter table core.user_role force row level security;
 
 create policy user_role_select_policy on core.user_role
   for select

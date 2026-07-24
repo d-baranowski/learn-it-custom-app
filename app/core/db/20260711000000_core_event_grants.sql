@@ -1,11 +1,11 @@
 -- Grant the dedicated core-event CDC role the privileges it needs at runtime.
 --
--- core-event connects as a role with REPLICATION + BYPASSRLS (created by the
--- Zalando operator in staging/prod). Its transformers SELECT from core tables
--- to enrich WAL events, and it publishes domain events to pgmq via
--- pgmq.send_topic. The rls_enabled_role auto-grant loop deliberately skips
--- BYPASSRLS roles, and pgmq functions are not SECURITY DEFINER, so those
--- privileges are granted explicitly here.
+-- core-event connects as a dedicated CDC role. Its transformers SELECT from core
+-- tables to enrich WAL events, and it publishes domain events to pgmq via
+-- pgmq.send_topic. On Aurora core_event is a non-owner with no BYPASSRLS, so it
+-- reads the RLS-protected core tables via the permissive core_event_read policies
+-- (20260724000000_core_event_rls_read_policies.sql); pgmq functions are not
+-- SECURITY DEFINER, so those privileges are granted explicitly here.
 --
 -- Guarded on role existence: in dev every service connects as the postgres
 -- superuser and no core_event role exists, so this is a no-op. On staging the

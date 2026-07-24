@@ -75,6 +75,9 @@ func (r *Repository[M, REQ, RESP]) Autocomplete(ctx context.Context, req *reques
 				span.RecordError(err)
 				return err
 			}
+		} else if err = BypassRLS(spanCtx, log, tx); err != nil {
+			span.RecordError(err)
+			return err
 		}
 
 		sq := tx.NewSelect().TableExpr(mod.TableName(ctx))
@@ -207,6 +210,9 @@ func (r *Repository[M, REQ, RESP]) Get(ctx context.Context, id string, opts *Get
 				span.RecordError(err)
 				return err
 			}
+		} else if err = BypassRLS(spanCtx, log, tx); err != nil {
+			span.RecordError(err)
+			return err
 		}
 
 		var sq = tx.NewSelect()
@@ -324,6 +330,8 @@ func (r *Repository[M, REQ, RESP]) List(ctx context.Context, req *requestv1.Sele
 				log.Error("error using RLS role", zap.Error(err))
 				return err
 			}
+		} else if err = BypassRLS(spanCtx, log, tx); err != nil {
+			return err
 		}
 
 		var sq *bun.SelectQuery = tx.NewSelect()
@@ -496,6 +504,9 @@ func (r *Repository[M, REQ, RESP]) Create(ctx context.Context, m *M, opts *Creat
 			rollback()
 			return nil, err
 		}
+	} else if err = BypassRLS(spanCtx, log, tx); err != nil {
+		rollback()
+		return nil, err
 	}
 
 	if opts.ManualQuery != nil {
@@ -647,6 +658,9 @@ func (r *Repository[M, REQ, RESP]) Update(ctx context.Context, m *M, opts *Updat
 			rollback()
 			return nil, err
 		}
+	} else if err = BypassRLS(spanCtx, log, tx); err != nil {
+		rollback()
+		return nil, err
 	}
 
 	if opts.ManualQuery != nil {
@@ -785,6 +799,9 @@ func (r *Repository[M, REQ, RESP]) SoftDelete(ctx context.Context, ids []string,
 			rollback()
 			return nil, err
 		}
+	} else if err = BypassRLS(spanCtx, log, tx); err != nil {
+		rollback()
+		return nil, err
 	}
 
 	var sqlResult sql.Result
@@ -912,6 +929,9 @@ func (r *Repository[M, REQ, RESP]) Delete(ctx context.Context, ids []string, opt
 			rollback()
 			return nil, err
 		}
+	} else if err = BypassRLS(spanCtx, log, tx); err != nil {
+		rollback()
+		return nil, err
 	}
 
 	var deleted []*M
@@ -1004,17 +1024,33 @@ func (r *Repository[M, REQ, RESP]) Run(ctx context.Context, run func(ctx context
 				log.Error("error using RLS role", zap.Error(err))
 				return err
 			}
+		} else if err = BypassRLS(ctx, log, tx); err != nil {
+			return err
 		}
 		return run(ctx, tx)
 	})
 }
 
+// UseRLSRole is intentionally a no-op. RLS enforcement no longer switches to a
+// dedicated rls_enabled_role — that role, and the role-scoped policies that
+// needed it, were removed. The app connects as a non-owner role that is directly
+// subject to the (now uniformly PUBLIC) policies; privileged paths bypass via
+// BypassRLS. Kept as a no-op so the enforce-path call sites don't need to change.
 func UseRLSRole(ctx context.Context, log *zap.Logger, tx bun.Tx) error {
-	_, err := tx.ExecContext(ctx, "SET LOCAL ROLE rls_enabled_role")
-	if err != nil {
-		// Log error - this is critical as RLS won't work without it
-		log.Error("failed to set PostgreSQL session variable for RLS", zap.Error(err))
-	}
+	return nil
+}
 
+// BypassRLS marks the current transaction as exempt from row-level security for
+// the "run without RLS" (SkipRLS) paths — service operations such as the
+// pre-auth login lookup that must read rows across all users. On the Zalando
+// cluster this relied on the connection role holding the BYPASSRLS attribute;
+// Aurora/RDS grants BYPASSRLS to no role, so instead we set a transaction-local
+// session flag that core.can() short-circuits on (see the core RLS migrations).
+// Uses set_config with is_local=true, mirroring how core.user is set.
+func BypassRLS(ctx context.Context, log *zap.Logger, tx bun.Tx) error {
+	_, err := tx.ExecContext(ctx, "SELECT set_config('core.bypass', 'on', true)")
+	if err != nil {
+		log.Error("failed to set core.bypass for SkipRLS transaction", zap.Error(err))
+	}
 	return err
 }

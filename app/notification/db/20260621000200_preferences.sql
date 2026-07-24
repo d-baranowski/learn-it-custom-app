@@ -22,9 +22,32 @@ CREATE UNIQUE INDEX IF NOT EXISTS preference_user_event_mechanism_uq
   ON notification.preference (user_id, event_type_key, delivery_mechanism)
   WHERE deleted_at IS NULL;
 
--- RLS is enabled here; policies are created by bootstrap (rls_enabled_role
--- doesn't exist until bootstrap runs, so policies can't reference it in migrations).
+-- RLS: policies are PUBLIC (untargeted), matching every other core policy, so
+-- they enforce against whatever non-owner role connects (the `app` role). The
+-- table owner (migrations) bypasses via NO FORCE, and privileged service paths
+-- bypass via the core.bypass GUC — so there's no role to reference here (the
+-- former rls_enabled_role has been removed).
 ALTER TABLE notification.preference ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY preference_select_policy ON notification.preference
+  FOR SELECT
+  USING (core.can_access('NotificationPreference', 2)
+    OR (user_id = core.current_user_id() AND core.can_access('NotificationPreference', 1)));
+
+CREATE POLICY preference_insert_policy ON notification.preference
+  FOR INSERT
+  WITH CHECK (core.can_create('NotificationPreference', 2)
+    OR (user_id = core.current_user_id() AND core.can_create('NotificationPreference', 1)));
+
+CREATE POLICY preference_update_policy ON notification.preference
+  FOR UPDATE
+  USING (core.can_update('NotificationPreference', 2)
+    OR (user_id = core.current_user_id() AND core.can_update('NotificationPreference', 1)));
+
+CREATE POLICY preference_delete_policy ON notification.preference
+  FOR DELETE
+  USING (core.can_delete('NotificationPreference', 2)
+    OR (user_id = core.current_user_id() AND core.can_delete('NotificationPreference', 1)));
 -- +goose StatementEnd
 
 -- +goose Down
