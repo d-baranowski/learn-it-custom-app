@@ -16,6 +16,11 @@
 
     "generate": {
       "cache": true,
+      "outputs": [
+        "{projectRoot}/gen",
+        "{projectRoot}/public/wasm",
+        "{projectRoot}/public/wasm_exec.js"
+      ],
       "executor": "nx:run-commands",
       "dependsOn": ["deps", {"target": "build", "projects": "form-validator"}],
       "options": {
@@ -32,6 +37,7 @@
     },
 
     "container": {
+      "dependsOn": ["generate"],
       "options": {
         "context": "{projectRoot}",
         "file": "app/ui/Dockerfile"
