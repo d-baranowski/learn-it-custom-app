@@ -121,6 +121,7 @@
     },
     "container": {
       "cache": true,
+      "dependsOn": ["generate"],
       "executor": "@nx-tools/nx-container:build",
       "options": {
         "file": "docker/Dockerfile",

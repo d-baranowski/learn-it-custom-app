@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1.9
 # core-event ships its WAL filter config alongside the binary, which the
 # shared docker/Dockerfile (binary-only image) can't express. Build flags
 # mirror docker/Dockerfile — native-arch builder + Go cross-compilation,
@@ -6,13 +5,11 @@
 FROM --platform=$BUILDPLATFORM golang:1.24.13-alpine AS builder
 ARG TARGETOS
 ARG TARGETARCH
-WORKDIR /build
-# Cacheable dependency layer (see docker/Dockerfile for the rationale): manifests only,
-# download modules, then copy source. Deps re-download only on a go.mod/go.sum change.
-COPY --parents go.work go.work.sum **/go.mod **/go.sum ./
-RUN for d in $(go list -m -f '{{.Dir}}'); do (cd "$d" && go mod download) || true; done
 COPY . /build
-RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
+WORKDIR /build
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
     go build -o ./dist/app/core-event ./app/core-event/cmd/
 
 FROM alpine:3.20.1
