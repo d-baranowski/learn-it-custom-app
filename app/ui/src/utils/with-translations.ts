@@ -28,7 +28,12 @@ export const withTranslations = <P extends { [key: string]: any } = { [key: stri
         props: {
           ...translations,
           ...serverProps(),
-        } as P,
+          // `as unknown as P` rather than `as P`: P is caller-chosen and may
+          // require fields this branch cannot know about, so the concrete
+          // object does not provably overlap it. This was `as P` while the
+          // object was only translations; adding serverProps() made the
+          // mismatch visible to tsc.
+        } as unknown as P,
       };
     }
 
