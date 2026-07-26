@@ -54,7 +54,52 @@ func ServiceProvider(props ServiceProps) (Service, error) {
 	return s, nil
 }
 
+// alreadySeeded reports whether a previous Run completed in full.
+//
+// The probe is core.recurring_cashflow, deliberately: it is the LAST thing Run
+// seeds. Probing something early (the admin user, say) would report "seeded"
+// for a run that died half way, and we would then skip a partially populated
+// database and pretend everything was fine.
+//
+// Using the last step means a partial run is NOT skipped. It will be retried
+// and will fail loudly on duplicate keys from the steps that did complete —
+// which is the correct outcome. Bootstrap.Run is not idempotent (only
+// permission.sql carries ON CONFLICT DO NOTHING; the other seed files are bare
+// INSERTs with hardcoded ids), so a half-seeded database needs a human, and
+// failing is how it asks for one.
+//
+// NOTE: this must run as the owner of the core tables (the `migrations` role).
+// Those tables have RLS and Aurora grants BYPASSRLS to nobody, so a non-owner
+// would be filtered to zero rows and conclude the database was empty.
+func (s *service) alreadySeeded(ctx context.Context) (bool, error) {
+	n, err := s.db.NewSelect().
+		Model((*coremodel.RecurringCashflow)(nil)).
+		Count(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	return n > 0, nil
+}
+
 func (s *service) Run(ctx context.Context) error {
+	// Idempotency gate. Bootstrap runs on every cluster bring-up (see the
+	// utr-staging-bootstrap-seed Job in lit-gitops), so re-running against an
+	// already-seeded database has to be a happy no-op rather than a pile of
+	// duplicate-key errors.
+	seeded, err := s.alreadySeeded(ctx)
+	if err != nil {
+		s.log.Error("failed to determine whether the database is already seeded", zap.Error(err))
+		return err
+	}
+
+	if seeded {
+		s.log.Info("database already bootstrapped, skipping seed")
+		return nil
+	}
+
+	s.log.Info("database not yet bootstrapped, seeding")
+
 	if err := s.adminUser(ctx); err != nil {
 		s.log.Error("failed to create admin user", zap.Error(err))
 		return err

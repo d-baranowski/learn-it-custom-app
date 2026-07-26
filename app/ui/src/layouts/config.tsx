@@ -6,6 +6,7 @@ import HomeIcon from '@mui/icons-material/Home';
 import GroupOutlinedIcon from '@mui/icons-material/GroupOutlined';
 import EngineeringIcon from '@mui/icons-material/Engineering';
 import { useUserPermissions } from '~/providers/user-permissions';
+import { useDevToolsEnabled } from '~/providers/dev-tools';
 import { Permission, Permissions } from '@gen/permissions';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
@@ -43,6 +44,8 @@ export interface Item {
   title: string;
   permission?: Permission;
   description?: string;
+  /** Only rendered when ENABLE_DEV_TOOLS is on for the environment. */
+  devToolsOnly?: boolean;
 }
 
 export interface Section {
@@ -320,6 +323,10 @@ export const sections: Section[] = [
       },
       {
         title: 'Dev Tools',
+        // Filtered out by useSections() unless ENABLE_DEV_TOOLS is on for this
+        // environment. pages/dev-tools.tsx 404s independently — hiding a nav
+        // item is cosmetic, not a control.
+        devToolsOnly: true,
         path: paths.devTools(),
         icon: (
           <SvgIcon fontSize="small">
@@ -334,9 +341,11 @@ export const sections: Section[] = [
 
 export const useSections = () => {
   const { canAccess } = useUserPermissions();
+  const devToolsEnabled = useDevToolsEnabled();
 
   function filterItems(items: Item[]): Item[] {
     return _.cloneDeep(items)
+      .filter((item) => (item.devToolsOnly ? devToolsEnabled : true)) // Hide dev-only entries when the flag is off
       .filter((item) => (item.permission ? canAccess(item.permission) : true)) // Filter out items that cannot be accessed
       .map((item) => ({
         ...item,

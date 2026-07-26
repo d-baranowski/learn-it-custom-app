@@ -17,6 +17,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ConnectTransport } from '~/utils/connect';
 import { TransportProvider } from '@connectrpc/connect-query';
 import { BreadcrumbsProvider } from '~/providers/breadcrumbs';
+import { DevToolsProvider } from '~/providers/dev-tools';
 import { Provider as ReactReduxProvider } from 'react-redux';
 
 import React, { useState } from 'react';
@@ -109,6 +110,13 @@ const CustomApp = ({
 
   return (
     <ReactReduxProvider store={store}>
+      {/*
+        devToolsEnabled is injected into every page's props by
+        withTranslations(), because it can only be resolved server-side —
+        see ~/providers/dev-tools for why config.ENABLE_DEV_TOOLS cannot be
+        read directly from a client component.
+      */}
+      <DevToolsProvider enabled={props.pageProps?.devToolsEnabled === true}>
       <CacheProvider value={emotionCache}>
         <Head>
           <title>{config.BRAND_TEXT}</title>
@@ -144,6 +152,7 @@ const CustomApp = ({
           </TransportProvider>
         </LocalizationProvider>
       </CacheProvider>
+      </DevToolsProvider>
     </ReactReduxProvider>
   );
 };

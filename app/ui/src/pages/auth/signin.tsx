@@ -18,6 +18,7 @@ import getToken from '~/auth/get-token';
 import trim from 'lodash/trim';
 import {useTranslation} from 'next-i18next';
 import {Link, Tab, Tabs} from '@mui/material';
+import {useDevToolsEnabled} from '~/providers/dev-tools';
 import {withTranslations} from '~/utils/with-translations';
 import {isValidCallbackUrl} from '~/utils/validate-callback-url';
 import NextLink from 'next/link';
@@ -37,6 +38,10 @@ export default function SignIn({
   usingEmail,
 }: InferGetServerSidePropsType<typeof getServerSideProps> & SignInProps) {
   const { t } = useTranslation('common');
+  // Server-resolved (withTranslations -> _app -> DevToolsProvider). Hidden by
+  // default; pages/dev-tools.tsx 404s independently, so this is presentation
+  // only, not the access control.
+  const devToolsEnabled = useDevToolsEnabled();
   const router = useRouter();
   const { callbackUrl } = router.query;
   const [value, setValue] = React.useState(usingEmail ? 0 : 1);
@@ -222,13 +227,15 @@ export default function SignIn({
                 {t('Login')}
               </Button>
             </form>
-            <Link
-              component={NextLink}
-              href={paths.devTools()}
-              sx={{ display: 'block', mt: 2, fontSize: 12, color: 'text.disabled', textAlign: 'center' }}
-            >
-              Dev Tools
-            </Link>
+            {devToolsEnabled && (
+              <Link
+                component={NextLink}
+                href={paths.devTools()}
+                sx={{ display: 'block', mt: 2, fontSize: 12, color: 'text.disabled', textAlign: 'center' }}
+              >
+                Dev Tools
+              </Link>
+            )}
           </>
         </div>
       </Box>
