@@ -47,8 +47,18 @@ IMG_PAYMENT="inspirationparticleltd/utro-payment:${NX_IMG_TAG}"
 IMG_UI="inspirationparticleltd/utro-ui:${NX_IMG_TAG}"
 
 # Postgres credentials
+#
+# Two identities, mirroring staging. PG_USER owns the schema and is exempt from
+# RLS; PG_APP_USER is a non-owner and is fully subject to it.
+#
+# This split is load-bearing, not tidiness. Postgres exempts superusers from row
+# level security unconditionally, so running the services as `postgres` left
+# every policy inert and every non-admin spec seeing the whole table. The `app`
+# role is created in docker/postgres/initdb.d/00001.sql.
 PG_USER="postgres"
 PG_PASS="password"
+PG_APP_USER="app"
+PG_APP_PASS="password"
 PG_DB="rpg"
 
 # Colors
@@ -258,22 +268,34 @@ for (( i=0; i<NUM_WORKERS; i++ )); do
   prefix="e2e-w${i}"; network="${prefix}-net"
   UI_HOST_PORT=$(( 4000 + i )); BOOTSTRAP_HOST_PORT=$(( 8080 + i * 100 ))
   log_worker "$i" "starting services (ui->:$UI_HOST_PORT, bootstrap-api->:$BOOTSTRAP_HOST_PORT)"
-  DB_ENV="-e DB_USER=$PG_USER -e DB_PASS=$PG_PASS -e DB_HOST=postgres -e DB_PORT=5432 -e DB_NAME=$PG_DB -e LOG_LEVEL=warn -e TIMEZONE=Europe/Warsaw"
+  DB_COMMON="-e DB_HOST=postgres -e DB_PORT=5432 -e DB_NAME=$PG_DB -e LOG_LEVEL=warn -e TIMEZONE=Europe/Warsaw"
+
+  # Runtime services connect as the NON-OWNER app role so RLS applies to them,
+  # which is the whole point of the split — as `postgres` they were superusers
+  # and every policy was skipped.
+  DB_ENV_APP="-e DB_USER=$PG_APP_USER -e DB_PASS=$PG_APP_PASS $DB_COMMON"
+
+  # bootstrap-api stays on the owner. It seeds fixtures across every tenant and
+  # must not be filtered by the policies it is setting data up for — the same
+  # reason staging points the bootstrap service at the `migrations` role rather
+  # than at `app`. Running it as `app` would make it seed only what it can
+  # already see, which is nothing on an empty database.
+  DB_ENV_OWNER="-e DB_USER=$PG_USER -e DB_PASS=$PG_PASS $DB_COMMON"
 
   docker run -d --name "${prefix}-core" --network "$network" --network-alias core \
-    $DB_ENV -e MIGRATE=false -e API_PORT=9102 -e HEALTH_PORT=18007 \
+    $DB_ENV_APP -e MIGRATE=false -e API_PORT=9102 -e HEALTH_PORT=18007 \
     -e ENABLE_DEV_API=true -e PAYMENT_SERVICE_URL=http://payment:9001 "$IMG_CORE" > /dev/null
 
   docker run -d --name "${prefix}-payment" --network "$network" --network-alias payment \
-    $DB_ENV -e API_PORT=9001 -e HEALTH_PORT=18010 "$IMG_PAYMENT" > /dev/null
+    $DB_ENV_APP -e API_PORT=9001 -e HEALTH_PORT=18010 "$IMG_PAYMENT" > /dev/null
 
   docker run -d --name "${prefix}-gateway" --network "$network" --network-alias gateway \
-    $DB_ENV -e API_PORT=9999 -e HEALTH_PORT=18009 -e CORE_SERVICE=core:9102 \
+    $DB_ENV_APP -e API_PORT=9999 -e HEALTH_PORT=18009 -e CORE_SERVICE=core:9102 \
     -e PAYMENT_SERVICE=payment:9001 -e WITH_PERMISSIONS=true -e ENABLE_PERMISSIONS=true \
     -e RPG_PERMISSIONS_FLAG=true "$IMG_GATEWAY" > /dev/null
 
   docker run -d --name "${prefix}-bootstrap-api" --network "$network" --network-alias bootstrap-api \
-    $DB_ENV -e ENABLE_DEV_API=true -e BOOTSTRAP_API_PORT=8080 -e HEALTH_PORT=18008 \
+    $DB_ENV_OWNER -e ENABLE_DEV_API=true -e BOOTSTRAP_API_PORT=8080 -e HEALTH_PORT=18008 \
     -e CORE_API_URL=http://core:9102 -p "${BOOTSTRAP_HOST_PORT}:8080" "$IMG_BOOTSTRAP" > /dev/null
 
   docker run -d --name "${prefix}-ui" --network "$network" --network-alias ui \
