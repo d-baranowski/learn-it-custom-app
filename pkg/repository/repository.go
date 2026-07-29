@@ -59,6 +59,8 @@ func (r *Repository[M, REQ, RESP]) Autocomplete(ctx context.Context, req *reques
 
 	result := make([]*M, 0)
 
+	var resp *requestv1.AutocompleteResponse
+
 	err = r.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		spanCtx, span, log := r.tracer.Start(ctx, "autocomplete-tx")
 		defer span.End()
@@ -122,6 +124,34 @@ func (r *Repository[M, REQ, RESP]) Autocomplete(ctx context.Context, req *reques
 				return err
 			}
 		}
+
+		rows := make([]interface{}, len(result))
+		for i, model := range result {
+			rows[i] = model
+		}
+
+		resp, err = autocompleteBuilder.BuildResponse(spanCtx, mod, rows, req.Order)
+		if err != nil {
+			log.Debug("error building autocomplete response", zap.Error(err))
+			span.RecordError(err)
+			return err
+		}
+
+		if options.PostHooks != nil {
+			for _, hook := range options.PostHooks {
+				err = hook(spanCtx, tx, result, &ExtraInfoReqResp[requestv1.AutocompleteRequest, requestv1.AutocompleteResponse]{
+					Request:  req,
+					Response: resp,
+					UserId:   options.UserId,
+				})
+				if err != nil {
+					log.Debug("error in post query handler", zap.Error(err))
+					span.RecordError(err)
+					return err
+				}
+			}
+		}
+
 		return nil
 	})
 
@@ -135,33 +165,6 @@ func (r *Repository[M, REQ, RESP]) Autocomplete(ctx context.Context, req *reques
 			return r.Autocomplete(ctx, req, options)
 		}
 		return nil, err
-	}
-
-	rows := make([]interface{}, len(result))
-	for i, model := range result {
-		rows[i] = model
-	}
-
-	resp, err := autocompleteBuilder.BuildResponse(spanCtx, mod, rows, req.Order)
-	if err != nil {
-		log.Debug("error building autocomplete response", zap.Error(err))
-		span.RecordError(err)
-		return nil, err
-	}
-
-	if options.PostHooks != nil {
-		for _, hook := range options.PostHooks {
-			err = hook(spanCtx, tx, result, &ExtraInfoReqResp[requestv1.AutocompleteRequest, requestv1.AutocompleteResponse]{
-				Request:  req,
-				Response: resp,
-				UserId:   options.UserId,
-			})
-			if err != nil {
-				log.Debug("error in post query handler", zap.Error(err))
-				span.RecordError(err)
-				return nil, err
-			}
-		}
 	}
 
 	return resp, nil
