@@ -4,6 +4,8 @@ import (
 	corev1 "app/core/gen/core/v1"
 	"context"
 	"encoding/json"
+	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	jsoniter "github.com/json-iterator/go"
@@ -93,31 +95,71 @@ func (s *userStorePG) Start(ctx context.Context) error {
 }
 
 func (s *userStorePG) listenForChanges(ctx context.Context) {
-	conn, err := s.db.Acquire(ctx)
-	if err != nil {
-		s.log.Error("failed to acquire connection for listener", zap.Error(err))
-		return
-	}
-	defer conn.Release()
-
-	_, err = conn.Exec(ctx, "LISTEN user_store_changes")
-	if err != nil {
-		s.log.Error("failed to listen to user_store_changes", zap.Error(err))
-		return
-	}
+	backoff := newRetryBackoff(250*time.Millisecond, 10*time.Second)
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		default:
+		}
+
+		if err := s.listenOnce(ctx); err != nil {
+			if ctx.Err() != nil {
+				return
+			}
+
+			// The LISTEN connection can be closed (db restart/network hiccup).
+			// Back off and reconnect — retrying on the same dead connection
+			// only spins.
+			s.log.Error("user_store_changes listener error; will reconnect", zap.Error(err))
+			backoff.Sleep(ctx)
+			continue
+		}
+
+		backoff.Reset()
+	}
+}
+
+func (s *userStorePG) listenOnce(ctx context.Context) error {
+	conn, err := s.db.Acquire(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to acquire connection for listener: %w", err)
+	}
+	defer conn.Release()
+
+	// A LISTEN session is idle by design — it parks in WaitForNotification until
+	// someone NOTIFYs — so the cluster-wide idle_session_timeout reaps it on a
+	// timer and we lose every notification until the reconnect lands. Opt this
+	// one session out, and reset before the connection goes back to the pool so
+	// the exemption never rides along on a reused connection.
+	if _, err := conn.Exec(ctx, "SET idle_session_timeout = 0"); err != nil {
+		return fmt.Errorf("failed to disable idle_session_timeout on listener: %w", err)
+	}
+	defer func() {
+		// Best effort: if the server already terminated the session this fails,
+		// and pgx discards the connection rather than pooling it.
+		if _, err := conn.Exec(context.WithoutCancel(ctx), "RESET idle_session_timeout"); err != nil {
+			s.log.Debug("failed to reset idle_session_timeout on listener connection", zap.Error(err))
+		}
+	}()
+
+	if _, err := conn.Exec(ctx, "LISTEN user_store_changes"); err != nil {
+		return fmt.Errorf("failed to LISTEN user_store_changes: %w", err)
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
 			notification, err := conn.Conn().WaitForNotification(ctx)
 			if err != nil {
 				if ctx.Err() != nil {
-					return
+					return nil
 				}
-				s.log.Error("error waiting for notification", zap.Error(err))
-				continue
+				// Signal the outer loop to reconnect.
+				return err
 			}
 
 			s.handleNotification(notification.Payload)

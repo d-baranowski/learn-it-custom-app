@@ -72,6 +72,16 @@ func NewService(lc fx.Lifecycle, ctx context.Context, config *postgres.Config, l
 
 	s.conn = conn.Conn()
 
+	// This connection parks in WaitForNotification for the life of the service,
+	// which reads as an idle session to Postgres — the cluster-wide
+	// idle_session_timeout would reap it on a timer. It is a dedicated listener
+	// connection that is never returned to the pool for reuse, so opting it out
+	// wholesale is safe.
+	if _, err = conn.Exec(ctx, "SET idle_session_timeout = 0"); err != nil {
+		log.Error("failed to disable idle_session_timeout on cdc listener", zap.Error(err))
+		return nil, err
+	}
+
 	_, err = conn.Exec(ctx, "listen cdc")
 	if err != nil {
 		log.Error("failed to listen to channel", zap.Error(err))

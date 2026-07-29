@@ -157,6 +157,22 @@ func (s *permissionStorePG) listenOnce(ctx context.Context) error {
 	}
 	defer conn.Release()
 
+	// A LISTEN session is idle by design — it parks in WaitForNotification until
+	// someone NOTIFYs — so the cluster-wide idle_session_timeout reaps it on a
+	// timer and we lose every notification until the reconnect lands. Opt this
+	// one session out, and reset before the connection goes back to the pool so
+	// the exemption never rides along on a reused connection.
+	if _, err := conn.Exec(ctx, "SET idle_session_timeout = 0"); err != nil {
+		return fmt.Errorf("failed to disable idle_session_timeout on listener: %w", err)
+	}
+	defer func() {
+		// Best effort: if the server already terminated the session this fails,
+		// and pgx discards the connection rather than pooling it.
+		if _, err := conn.Exec(context.WithoutCancel(ctx), "RESET idle_session_timeout"); err != nil {
+			s.log.Debug("failed to reset idle_session_timeout on listener connection", zap.Error(err))
+		}
+	}()
+
 	if _, err := conn.Exec(ctx, "LISTEN permission_store_changes"); err != nil {
 		return fmt.Errorf("failed to LISTEN permission_store_changes: %w", err)
 	}
