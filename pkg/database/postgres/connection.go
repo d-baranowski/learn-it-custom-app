@@ -95,6 +95,12 @@ func ConnectionProvider(_ fx.Lifecycle, config *Config, log *zap.Logger, dialect
 	sqlDB.SetMaxIdleConns(config.MaxIdleConnections)
 	sqlDB.SetMaxOpenConns(config.MaxOpenConnections)
 	sqlDB.SetConnMaxLifetime(time.Duration(config.MaxConnLifetime) * time.Second)
+	// Recycles connections that sit unused in the pool. ConnMaxLifetime alone is
+	// not enough: it only applies to connections RETURNED to the pool, so one
+	// checked out inside an open transaction is never eligible — which is why
+	// the 2026-07-29 leak outlived its 1h lifetime. Pairs with Aurora's
+	// idle_session_timeout, and is kept below it so the client closes first.
+	sqlDB.SetConnMaxIdleTime(time.Duration(config.MaxConnIdleTime) * time.Second)
 
 	c.SqlDB = sqlDB
 
@@ -158,6 +164,12 @@ func PooledConnectionProvider(ctx context.Context, _ fx.Lifecycle, config *Confi
 	sqlDB.SetMaxIdleConns(config.MaxIdleConnections)
 	sqlDB.SetMaxOpenConns(config.MaxOpenConnections)
 	sqlDB.SetConnMaxLifetime(time.Duration(config.MaxConnLifetime) * time.Second)
+	// Recycles connections that sit unused in the pool. ConnMaxLifetime alone is
+	// not enough: it only applies to connections RETURNED to the pool, so one
+	// checked out inside an open transaction is never eligible — which is why
+	// the 2026-07-29 leak outlived its 1h lifetime. Pairs with Aurora's
+	// idle_session_timeout, and is kept below it so the client closes first.
+	sqlDB.SetConnMaxIdleTime(time.Duration(config.MaxConnIdleTime) * time.Second)
 
 	c.SqlDB = sqlDB
 
@@ -199,6 +211,12 @@ func NewPostgresConnection(config *Config) (*Connection, error) {
 	sqlDB.SetMaxIdleConns(config.MaxIdleConnections)
 	sqlDB.SetMaxOpenConns(config.MaxOpenConnections)
 	sqlDB.SetConnMaxLifetime(time.Duration(config.MaxConnLifetime) * time.Second)
+	// Recycles connections that sit unused in the pool. ConnMaxLifetime alone is
+	// not enough: it only applies to connections RETURNED to the pool, so one
+	// checked out inside an open transaction is never eligible — which is why
+	// the 2026-07-29 leak outlived its 1h lifetime. Pairs with Aurora's
+	// idle_session_timeout, and is kept below it so the client closes first.
+	sqlDB.SetConnMaxIdleTime(time.Duration(config.MaxConnIdleTime) * time.Second)
 
 	c.SqlDB = sqlDB
 

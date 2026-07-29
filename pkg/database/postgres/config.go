@@ -18,14 +18,20 @@ type Config struct {
 		Charset   string
 		Loc       string
 	}
-	MaxIdleConnections int     `envconfig:"DB_MAX_IDLE_CONNECTIONS" default:"10"`
-	MaxOpenConnections int     `envconfig:"DB_MAX_OPEN_CONNECTIONS" default:"25"` //25
-	MaxConnLifetime    int     `envconfig:"DB_MAX_CONN_LIFETIME" default:"3600"`  //1800
-	AutoMigrate        bool    `envconfig:"DB_AUTO_MIGRATE" default:"false"`
-	LogLevel           string  `envconfig:"DB_LOG_LEVEL" default:"warn"`
-	SearchPath         string  `envconfig:"DB_SEARCH_PATH" default:""`
-	Trace              bool    `envconfig:"DB_TRACE" default:"false"`
-	SaveQueryFilePath  *string `envconfig:"DB_SAVE_QUERY_FILE_PATH"`
+	MaxIdleConnections int `envconfig:"DB_MAX_IDLE_CONNECTIONS" default:"10"`
+	MaxOpenConnections int `envconfig:"DB_MAX_OPEN_CONNECTIONS" default:"25"` //25
+	MaxConnLifetime    int `envconfig:"DB_MAX_CONN_LIFETIME" default:"3600"`  //1800
+	// Recycles connections that sit unused in the pool. Distinct from
+	// MaxConnLifetime, which only applies once a connection is RETURNED — a
+	// connection checked out inside an open transaction is never eligible for
+	// it. Kept below Aurora's idle_session_timeout (10m) so the client closes
+	// first and the server never has to.
+	MaxConnIdleTime   int     `envconfig:"DB_MAX_CONN_IDLE_TIME" default:"300"` //5m
+	AutoMigrate       bool    `envconfig:"DB_AUTO_MIGRATE" default:"false"`
+	LogLevel          string  `envconfig:"DB_LOG_LEVEL" default:"warn"`
+	SearchPath        string  `envconfig:"DB_SEARCH_PATH" default:""`
+	Trace             bool    `envconfig:"DB_TRACE" default:"false"`
+	SaveQueryFilePath *string `envconfig:"DB_SAVE_QUERY_FILE_PATH"`
 }
 
 func (c *Config) ConnectionString() string {

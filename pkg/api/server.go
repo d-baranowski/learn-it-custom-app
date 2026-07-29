@@ -80,9 +80,30 @@ func (s *Server) Start(_ context.Context) error {
 	serveMux := http.NewServeMux()
 
 	s.srv = &http.Server{
-		Addr:              ":http",
-		Handler:           h2c.NewHandler(serveMux, &http2.Server{}),
+		Addr:    ":http",
+		Handler: h2c.NewHandler(serveMux, &http2.Server{}),
+
 		ReadHeaderTimeout: 15 * time.Second,
+
+		// WriteTimeout is the backstop that makes a stalled request FAIL rather
+		// than hang forever.
+		//
+		// Until 2026-07-29 this was the only timeout set, and there was no
+		// handler deadline either. database/sql waits for a pooled connection on
+		// ctx.Done() alone, so when the pool deadlocked, requests waited
+		// indefinitely: no error, no response, no recovery. Staging's login hung
+		// for two hours and nginx eventually returned 504 while the Go side was
+		// still politely waiting.
+		//
+		// 60s is deliberately generous — well above any legitimate request here,
+		// so this only ever trips on a genuine stall. It bounds the damage; it
+		// does not replace fixing what stalls.
+		// See infrastructure/INCIDENT-2026-07-29-db-pool-deadlock.md.
+		WriteTimeout: 60 * time.Second,
+
+		// Bounds how long a kept-alive connection may sit unused. Without it an
+		// idle client holds a server goroutine and its file descriptor forever.
+		IdleTimeout: 120 * time.Second,
 	}
 
 	listenerAddr := fmt.Sprintf("%s:%d", s.config.Host, s.config.Port)
