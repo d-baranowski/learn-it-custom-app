@@ -63,17 +63,20 @@ func SessionServiceProvider(props ApiServiceProps, paymentClient paymentv1connec
 	s.CreateMethod.AddPreHook(stampCancelledByOnCreate)
 	s.UpdateMethod.AddPreHook(stampCancelledByOnTransition)
 
-	s.GetMethod.AddPostHook(func(ctx context.Context, id string, result *model.Session, extra *repository.ExtraInfoReqResp[v1.GetRequest, corev1.Session]) error {
+	s.GetMethod.AddPostHook(func(ctx context.Context, tx bun.Tx, id string, result *model.Session, extra *repository.ExtraInfoReqResp[v1.GetRequest, corev1.Session]) error {
 		queryResult := make([]*model.SessionCustomer, 0)
 
-		err := s.repository.Run(ctx, func(ctx context.Context, tx bun.Tx) error {
-			return tx.NewSelect().
-				Model((*model.SessionCustomer)(nil)).
-				Column("customer_id").
-				Limit(100).
-				Where("session_id = ?", result.Id).
-				Scan(ctx, &queryResult)
-		})
+		// Uses the OUTER transaction. It used to call s.repository.Run here,
+		// which opens a second transaction from the same pool while this hook
+		// still holds the first — with MaxOpenConns=25 that deadlocked the pool
+		// at 25 concurrent Gets and hung every login for two hours on
+		// 2026-07-29. See infrastructure/INCIDENT-2026-07-29-db-pool-deadlock.md.
+		err := tx.NewSelect().
+			Model((*model.SessionCustomer)(nil)).
+			Column("customer_id").
+			Limit(100).
+			Where("session_id = ?", result.Id).
+			Scan(ctx, &queryResult)
 
 		if err != nil {
 			props.Log.Error("error fetching session customers", zap.Error(err))
@@ -87,6 +90,20 @@ func SessionServiceProvider(props ApiServiceProps, paymentClient paymentv1connec
 
 		extra.Response.CustomerIds = customerIds
 
+		// KNOWN ISSUE — blocking cross-service HTTP inside an open transaction.
+		//
+		// This holds a pooled database connection for the whole payment call, so
+		// a slow or hanging payment service turns directly into database
+		// exhaustion. It no longer DEADLOCKS (that was the nested acquire fixed
+		// above — each request now holds exactly one connection, so the pool
+		// drains as calls complete), but it still couples database capacity to
+		// an external dependency's latency.
+		//
+		// Properly fixing it needs a post-COMMIT hook: the enrichment has to run
+		// after the transaction closes, which pkg/api has no mechanism for today.
+		// Until then the blast radius is bounded by Aurora's
+		// idle_in_transaction_session_timeout (60s, added in the same incident
+		// response) rather than by anything in this code.
 		if result.PaymentLinkId != nil && *result.PaymentLinkId != "" {
 			paymentResp, err := s.paymentClient.Get(ctx, withPaymentHeaders(
 				ctx,

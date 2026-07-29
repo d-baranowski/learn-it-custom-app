@@ -9,6 +9,8 @@ import (
 	"pkg/repository"
 	v1 "pkg/request/gen/request/v1"
 	"pkg/tracing"
+
+	"github.com/uptrace/bun"
 )
 
 type TherapistServiceLinkService struct {
@@ -37,7 +39,10 @@ func TherapistServiceLinkServiceProvider(props ApiServiceProps) error {
 		props.ViewEngine,
 	)
 
-	s.AutocompleteMethod.AddPostHook(func(ctx context.Context, result []*model.TherapistService, extra *repository.ExtraInfoReqResp[v1.AutocompleteRequest, v1.AutocompleteResponse]) error {
+	// tx is unused here (this hook only reshapes the response) but is part of the
+	// signature so read hooks that DO query have the outer transaction available
+	// rather than reaching for the pool.
+	s.AutocompleteMethod.AddPostHook(func(ctx context.Context, tx bun.Tx, result []*model.TherapistService, extra *repository.ExtraInfoReqResp[v1.AutocompleteRequest, v1.AutocompleteResponse]) error {
 		for i, item := range extra.Response.Items {
 			if i < len(result) {
 				item.ID = result[i].ServiceId

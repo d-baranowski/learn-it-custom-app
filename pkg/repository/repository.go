@@ -151,7 +151,7 @@ func (r *Repository[M, REQ, RESP]) Autocomplete(ctx context.Context, req *reques
 
 	if options.PostHooks != nil {
 		for _, hook := range options.PostHooks {
-			err = hook(spanCtx, result, &ExtraInfoReqResp[requestv1.AutocompleteRequest, requestv1.AutocompleteResponse]{
+			err = hook(spanCtx, tx, result, &ExtraInfoReqResp[requestv1.AutocompleteRequest, requestv1.AutocompleteResponse]{
 				Request:  req,
 				Response: resp,
 				UserId:   options.UserId,
@@ -253,7 +253,7 @@ func (r *Repository[M, REQ, RESP]) Get(ctx context.Context, id string, opts *Get
 
 		if opts != nil && opts.PostHooks != nil {
 			for _, hook := range opts.PostHooks {
-				err = hook(spanCtx, id, &row, &ExtraInfoReqResp[REQ, RESP]{
+				err = hook(spanCtx, tx, id, &row, &ExtraInfoReqResp[REQ, RESP]{
 					Request:  opts.Req,
 					Response: opts.Resp,
 					UserId:   nil,
@@ -413,7 +413,7 @@ func (r *Repository[M, REQ, RESP]) List(ctx context.Context, req *requestv1.Sele
 
 		if opts.PostHooks != nil {
 			for _, hook := range opts.PostHooks {
-				err = hook(spanCtx, result, &ExtraInfoReqResp[requestv1.SelectRequest, request.ListResponse[M]]{
+				err = hook(spanCtx, tx, result, &ExtraInfoReqResp[requestv1.SelectRequest, request.ListResponse[M]]{
 					Request:  req,
 					Response: listResp,
 					UserId:   opts.UserId,

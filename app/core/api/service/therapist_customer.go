@@ -9,6 +9,8 @@ import (
 	"pkg/repository"
 	v1 "pkg/request/gen/request/v1"
 	"pkg/tracing"
+
+	"github.com/uptrace/bun"
 )
 
 type TherapistCustomerLinkService struct {
@@ -37,7 +39,10 @@ func TherapistCustomerLinkServiceProvider(props ApiServiceProps) error {
 		props.ViewEngine,
 	)
 
-	s.AutocompleteMethod.AddPostHook(func(ctx context.Context, result []*model.TherapistCustomer, extra *repository.ExtraInfoReqResp[v1.AutocompleteRequest, v1.AutocompleteResponse]) error {
+	// tx is unused here (this hook is a no-op) but is part of the signature so
+	// read hooks that DO query have the outer transaction available rather than
+	// reaching for the pool.
+	s.AutocompleteMethod.AddPostHook(func(ctx context.Context, tx bun.Tx, result []*model.TherapistCustomer, extra *repository.ExtraInfoReqResp[v1.AutocompleteRequest, v1.AutocompleteResponse]) error {
 		// No need to modify IDs - return the therapist_customer link ID itself
 		return nil
 	})

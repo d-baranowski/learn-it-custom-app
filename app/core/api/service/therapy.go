@@ -75,18 +75,21 @@ func TherapyServiceProvider(props ApiServiceProps) error {
 	s.CreateMethod.AddPreHook(validateRoomForOfflineSessions)
 	s.UpdateMethod.AddPreHook(validateRoomForOfflineSessions)
 
-	s.GetMethod.AddPostHook(func(ctx context.Context, id string, result *model.Therapy, extra *repository.ExtraInfoReqResp[v1.GetRequest, corev1.Therapy]) error {
-		// Load customerIds from therapy_customer join table
+	s.GetMethod.AddPostHook(func(ctx context.Context, tx bun.Tx, id string, result *model.Therapy, extra *repository.ExtraInfoReqResp[v1.GetRequest, corev1.Therapy]) error {
+		// Load customerIds from therapy_customer join table.
+		//
+		// Uses the OUTER transaction — this previously called s.repository.Run,
+		// acquiring a second connection from the same pool while still holding
+		// the first. Same deadlock as SessionService/Get; see
+		// infrastructure/INCIDENT-2026-07-29-db-pool-deadlock.md.
 		queryResult := make([]*model.TherapyCustomer, 0)
 
-		if err := s.repository.Run(ctx, func(ctx context.Context, tx bun.Tx) error {
-			return tx.NewSelect().
-				Model(&queryResult).
-				Column("customer_id").
-				Limit(1000).
-				Where("therapy_id = ?", result.Id).
-				Scan(ctx)
-		}); err != nil {
+		if err := tx.NewSelect().
+			Model(&queryResult).
+			Column("customer_id").
+			Limit(1000).
+			Where("therapy_id = ?", result.Id).
+			Scan(ctx); err != nil {
 			props.Log.Error("error fetching therapy customers", zap.Error(err))
 			return err
 		}

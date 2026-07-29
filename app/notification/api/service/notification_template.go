@@ -43,9 +43,13 @@ func NotificationTemplateServiceProvider(props ApiServiceProps) error {
 		props.ViewEngine,
 	)
 
-	s.GetMethod.AddPostHook(func(ctx context.Context, id string, result *model.Template, extra *repository.ExtraInfoReqResp[requestv1.GetRequest, notificationv1.NotificationTemplate]) error {
+	s.GetMethod.AddPostHook(func(ctx context.Context, tx bun.Tx, id string, result *model.Template, extra *repository.ExtraInfoReqResp[requestv1.GetRequest, notificationv1.NotificationTemplate]) error {
+		// Uses the OUTER transaction. This previously queried props.DB — the
+		// pool — from inside the open read transaction, which is the same
+		// deadlock that took core down on 2026-07-29, just in the notification
+		// service. See infrastructure/INCIDENT-2026-07-29-db-pool-deadlock.md.
 		var variants []*model.TemplateVariant
-		if err := props.DB.NewSelect().
+		if err := tx.NewSelect().
 			Model(&variants).
 			Where("template_id = ?", result.Id).
 			Where("deleted_at IS NULL").
