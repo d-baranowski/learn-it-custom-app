@@ -638,7 +638,10 @@ func (r *Repository[M, REQ, RESP]) Update(ctx context.Context, m *M, opts *Updat
 	}
 
 	rollback := func() {
-		if rollbackErr := tx.Rollback(); err != nil {
+		// Tests rollbackErr, not the enclosing err. It read `err != nil` until
+		// 2026-07-29, so a failed rollback was reported only when the outer
+		// operation had also failed, and silently swallowed otherwise.
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
 			log.Error("error rolling back transaction", zap.Error(rollbackErr))
 			span.RecordError(rollbackErr)
 		}
@@ -706,6 +709,9 @@ func (r *Repository[M, REQ, RESP]) Update(ctx context.Context, m *M, opts *Updat
 		if err != nil {
 			log.Error("error updating", zap.Error(err))
 			span.RecordError(err)
+			// Was missing: every failed update leaked its connection until the
+			// process restarted.
+			rollback()
 			return nil, err
 		}
 	}
@@ -837,6 +843,14 @@ func (r *Repository[M, REQ, RESP]) SoftDelete(ctx context.Context, ids []string,
 	ra, err := sqlResult.RowsAffected()
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			// "Nothing matched" is a successful no-op, but the transaction is
+			// still open — returning here without committing leaked the
+			// connection. Commit so it is released; there is nothing to undo.
+			if commitErr := tx.Commit(); commitErr != nil {
+				log.Error("error committing empty delete transaction", zap.Error(commitErr))
+				span.RecordError(commitErr)
+				return nil, commitErr
+			}
 			return resp, nil
 		}
 		log.Error("error getting rows affected", zap.Error(err))
@@ -961,10 +975,20 @@ func (r *Repository[M, REQ, RESP]) Delete(ctx context.Context, ids []string, opt
 	ra, err := sqlResult.RowsAffected()
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			// "Nothing matched" is a successful no-op, but the transaction is
+			// still open — returning here without committing leaked the
+			// connection. Commit so it is released; there is nothing to undo.
+			if commitErr := tx.Commit(); commitErr != nil {
+				log.Error("error committing empty delete transaction", zap.Error(commitErr))
+				span.RecordError(commitErr)
+				return nil, commitErr
+			}
 			return resp, nil
 		}
 		log.Error("error getting rows affected", zap.Error(err))
 		span.RecordError(err)
+		// Was missing here but present in SoftDelete's identical branch.
+		rollback()
 		return nil, err
 	}
 
