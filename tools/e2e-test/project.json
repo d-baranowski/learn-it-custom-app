@@ -37,6 +37,14 @@
         "command": "pnpm exec eslint . --ext .ts,.js && node scripts/check-spec-size.mjs && node scripts/check-test-ids.mjs"
       }
     },
+    "test": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["deps"],
+      "options": {
+        "cwd": "{projectRoot}",
+        "command": "node --import tsx --test 'scripts/**/*.test.ts'"
+      }
+    },
     "e2e-list": {
       "executor": "nx:run-commands",
       "options": {

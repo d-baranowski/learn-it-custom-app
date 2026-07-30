@@ -11,6 +11,13 @@ out/
 .nx/workspace-data
 tmp/
 
+# Protobuf codegen output. Every buf.gen.yaml in the repo declares `out: gen`,
+# and the tree is regenerated from the .proto files on demand — CI does it in
+# utroPrepare (`nx run-many -t generate`) before anything builds. Committing it
+# would add review noise and a second source of truth that drifts silently
+# whenever someone edits a .proto without re-running codegen.
+gen/
+
 # Test / coverage
 coverage/
 test-output/

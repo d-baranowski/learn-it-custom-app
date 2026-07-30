@@ -169,7 +169,12 @@ services:
     environment:
       MIGRATE: false
       API_PORT: 9102
-      DB_USER: postgres
+      # Non-owner role, so row level security applies. Postgres exempts
+      # superusers from RLS unconditionally, so running this as `postgres`
+      # leaves every policy inert and non-admin users see the whole table.
+      # Created in docker/postgres/initdb.d/00001.sql; the migrate/bootstrap
+      # services below stay on `postgres`, which owns core.*.
+      DB_USER: app
       DB_PASS: password
       DB_HOST: postgres
       DB_PORT: 5432
@@ -226,7 +231,8 @@ services:
         condition: service_completed_successfully
     environment:
       API_PORT: 9001
-      DB_USER: postgres
+      # Non-owner role — see the note on `core`.
+      DB_USER: app
       DB_PASS: password
       DB_HOST: postgres
       DB_PORT: 5432
@@ -274,6 +280,19 @@ services:
       core-event-migrate:
         condition: service_completed_successfully
     environment:
+      # Deliberately NOT the `app` role. core-event opens a logical replication
+      # slot, which needs the REPLICATION attribute — staging gives it a
+      # dedicated core_event role holding rds_replication, not app.
+      #
+      # Leaving it on the superuser is also faithful to intent rather than a
+      # shortcut: on staging core_event reads every row via the permissive
+      # core_event_read policies added in
+      # 20260724000000_core_event_rls_read_policies.sql, because a CDC consumer
+      # enriching WAL events has to see the whole table. Unfiltered reads are
+      # the design here, not an accident.
+      #
+      # It also serves no user-facing request, so it has no bearing on the
+      # non-admin specs this split exists to make meaningful.
       DB_USER: postgres
       DB_PASS: password
       DB_HOST: postgres
@@ -301,7 +320,8 @@ services:
         condition: service_completed_successfully
     environment:
       API_PORT: 9002
-      DB_USER: postgres
+      # Non-owner role — see the note on `core`.
+      DB_USER: app
       DB_PASS: password
       DB_HOST: postgres
       DB_PORT: 5432
@@ -330,7 +350,8 @@ services:
       ENABLE_PERMISSIONS: true
       RPG_PERMISSIONS_FLAG: true
       LOG_TEXT_FORMAT: true
-      DB_USER: postgres
+      # Non-owner role — see the note on `core`.
+      DB_USER: app
       DB_PASS: password
       DB_HOST: postgres
       DB_PORT: 5432

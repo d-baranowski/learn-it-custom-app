@@ -8,31 +8,83 @@
 #   JENKINS_GWT_TOKEN  Generic Webhook Trigger token (matches Jenkins' gwt-token cred)
 #
 # The POST hits the Cloudflare Access *bypass* path, authed by ?token= — no login.
-# Jenkins' utro-pr job extracts sha/branch from the body and chains
-# utro-pr -> utro-build-images -> utro-e2e, posting commit statuses back to this PR.
+# One endpoint (utro-pr's GenericTrigger) receives both events below; the `event`
+# field in the body is what tells them apart.
+#
+# BUILD ONCE, PROMOTE
+#
+#   PR push   event=ci       utro-pr -> utro-build-images -> utro-e2e
+#   PR merged event=release  utro-release   (no rebuild, no re-test)
+#
+# On merge we already have the answer: the images tagged :<pr-head-sha> were built
+# from that exact tree and just spent an hour passing e2e. Re-running the whole
+# pipeline against the merge commit re-derives it at the cost of an hour and a
+# second full Spot-agent fan-out. So merging promotes the artifact instead —
+# utro-release retags those images :vX.Y.Z + :main and cuts the GitHub release,
+# which takes ~2 minutes.
+#
+# This is only sound because the merged tree equals the tested tree, which is what
+# "Require branches to be up to date before merging" enforces on main. Without that
+# rule a PR built against a stale main could promote images that were never tested
+# against what it merges into.
+#
+# Both events send the PULL REQUEST HEAD SHA, never main's new commit. Squash and
+# rebase merges mint a brand-new sha that no image was ever tagged with, so
+# utroRelease's `describe-images --image-ids imageTag=$sha` would find nothing and
+# abort. The head sha is the one the registry knows.
+#
+# There is deliberately no `push: branches: [main]` trigger. It would fire
+# alongside the merged-PR event and run the very pipeline this design exists to
+# skip. The cost is that a commit pushed straight to main gets no CI — acceptable,
+# because such a commit has no pre-built images to promote either, and main is
+# protected.
 name: CI (trigger Jenkins)
 
 on:
+  # `closed` is not a default type — without it the merge event never arrives.
   pull_request:
-  push:
-    branches: [main]
+    types: [opened, synchronize, reopened, closed]
 
 jobs:
+  # Open/update a PR: run the full pipeline against the branch head.
   trigger-jenkins:
+    # Closing a PR without merging must not kick off a build.
+    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     steps:
       - name: Kick off Jenkins utro-pr
         env:
           JENKINS_URL: ${{ secrets.JENKINS_URL }}
           GWT_TOKEN: ${{ secrets.JENKINS_GWT_TOKEN }}
-          # PR head sha on pull_request, the pushed sha on push-to-main.
-          SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-          BRANCH: ${{ github.head_ref || github.ref_name }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          BRANCH: ${{ github.head_ref }}
         run: |
           set -euo pipefail
           code=$(curl -sS -o /tmp/resp.json -w '%{http_code}' -X POST \
             "${JENKINS_URL%/}/generic-webhook-trigger/invoke?token=${GWT_TOKEN}" \
             -H 'Content-Type: application/json' \
-            -d "{\"sha\":\"${SHA}\",\"branch\":\"${BRANCH}\"}")
+            -d "{\"sha\":\"${SHA}\",\"branch\":\"${BRANCH}\",\"event\":\"ci\"}")
+          echo "Jenkins responded ${code}:"; cat /tmp/resp.json; echo
+          test "${code}" = "200"
+
+  # Merge a PR: promote the images that PR already built and tested.
+  trigger-release:
+    # merged, not just closed — `closed` also fires when a PR is abandoned.
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Kick off Jenkins utro-release
+        env:
+          JENKINS_URL: ${{ secrets.JENKINS_URL }}
+          GWT_TOKEN: ${{ secrets.JENKINS_GWT_TOKEN }}
+          # The head sha, NOT the merge/squash commit — see the header.
+          SHA: ${{ github.event.pull_request.head.sha }}
+          BRANCH: main
+        run: |
+          set -euo pipefail
+          code=$(curl -sS -o /tmp/resp.json -w '%{http_code}' -X POST \
+            "${JENKINS_URL%/}/generic-webhook-trigger/invoke?token=${GWT_TOKEN}" \
+            -H 'Content-Type: application/json' \
+            -d "{\"sha\":\"${SHA}\",\"branch\":\"${BRANCH}\",\"event\":\"release\"}")
           echo "Jenkins responded ${code}:"; cat /tmp/resp.json; echo
           test "${code}" = "200"
