@@ -254,7 +254,7 @@ const TherapySubtitle: React.FC = () => {
   return (
     <Grid item xs={12} sx={{ mt: -0.5, mb: 1 }}>
       <Typography variant="body2" color="text.secondary">
-        {subtitle}
+        {subtitle} CI/CD
       </Typography>
     </Grid>
   );
