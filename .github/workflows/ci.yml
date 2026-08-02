@@ -3,7 +3,7 @@
 # that lives in this repo — orchestration + build steps live in the infra repo /
 # the utro-ci Jenkins shared library.
 #
-# Repo secrets are Terraform-managed (infra github/ root, wire_jenkins_ci_secrets):
+# Repo secrets are Terraform-managed (infra app-repos/ root, wire_jenkins_ci_secrets):
 #   JENKINS_URL        https://jenkins-aws.inspi.cloud
 #   JENKINS_GWT_TOKEN  Generic Webhook Trigger token (matches Jenkins' gwt-token cred)
 #
