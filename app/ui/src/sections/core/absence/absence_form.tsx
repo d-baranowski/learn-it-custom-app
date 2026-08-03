@@ -44,6 +44,7 @@ export const AbsenceForm: React.FC<Props> = ({
       <DateTimeFe name="fromTime" label="From Date/Time" required />
       <DateTimeFe name="tillTime" label="Till Date/Time" required />
       <StringFe name="reason" label="Reason" fullWidth multiline rows={3} />
+      <StringFe name="deleteMe" label="Delete Me" fullWidth multiline rows={3} />
       <FormActionsDropdown
         permission={Permissions.Absence}
         deleteDescriptor={deleteAbsence}

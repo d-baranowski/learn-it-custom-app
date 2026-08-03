@@ -1,31 +1,78 @@
+# Local development backing services: Postgres, Redis, pgAdmin, and an
+# all-in-one OTel/Grafana stack. The Go services and the UI are NOT here — they
+# run on the host under run-stack.sh so they stay hot-reloadable.
+#
+# PARALLEL STACKS
+#
+# Every host port is a ${..._HOST_PORT:-default} and no service sets
+# container_name, because manage-stacks.sh runs several complete stacks side by
+# side (one per e2e shard / feature branch). Isolation comes from
+# COMPOSE_PROJECT_NAME: Compose namespaces container names, the network and the
+# named volumes under it, so stacks share nothing. Hard-coding a container_name
+# or a host port anywhere below collapses that — the second stack fails to start
+# with a name/port conflict.
 services:
   postgres:
     # container_name removed: Compose auto-names as <project>-postgres-1 so
     # parallel stacks (each with their own COMPOSE_PROJECT_NAME) don't clash.
+    #
+    # Built rather than pulled: the stock postgres:15.4 image has no pg_cron or
+    # pg_partman, and both are extensions that must be present in the image
+    # before the server starts (see docker/postgres/Dockerfile).
     build:
       dockerfile: ./docker/postgres/Dockerfile
     command: [
       "postgres",
       "-c", "log_destination=stderr",
+      # The query-statistics stack (POWA and friends) is parked, not abandoned —
+      # these pair with the matching commented-out apt installs in
+      # docker/postgres/Dockerfile. Uncommenting here alone will not start:
+      # shared_preload_libraries fails hard on a library that is not installed,
+      # so the container would crash-loop before accepting a connection.
       #"-c", "shared_preload_libraries=pg_stat_statements,pg_cron,powa,pg_stat_kcache,pg_qualstats",
       "-c", "shared_preload_libraries=pg_cron",
       #"-c", "pg_stat_statements.max=10000",
       #"-c", "pg_stat_statements.track=all",
+      # Logical decoding, for pkg/cdc/wal — core-event tails the WAL to publish
+      # domain events. Without wal_level=logical the replication slot cannot be
+      # created and the CDC publisher fails at startup, not at first write. The
+      # slot/sender ceilings are generous on purpose: each parallel stack and
+      # each restarted publisher can hold a slot, and an exhausted pool surfaces
+      # as a confusing "all replication slots are in use" rather than a clear
+      # error.
       "-c", "wal_level=logical",
       "-c", "max_wal_senders=10",
       "-c", "max_replication_slots=10",
+      # pg_cron's scheduler lives in exactly one database and defaults to
+      # `postgres`. The app's schema — and the job scheduled in
+      # app/core/db/20240612052729_user.sql, which expires user locks every
+      # minute — is in `rpg`, created by initdb.d below. Point them apart and
+      # the job silently never runs.
       "-c", "cron.database_name=rpg",
     ]
     ports:
       - "${POSTGRES_HOST_PORT:-5432}:5432"
     restart: always
+    # Postgres sizes its shared memory from /dev/shm, and Docker's 64 MB default
+    # is far below what parallel query and hash joins want. Too small shows up as
+    # "could not resize shared memory segment" under load, not at boot.
     shm_size: 4g
     volumes:
+      # initdb.d runs ONLY when the data volume is empty. Editing 00001.sql on an
+      # existing stack does nothing — you have to drop the volume
+      # (docker compose down -v) to re-bootstrap. This is the usual reason a
+      # schema change "did not apply".
       - ./docker/postgres/initdb.d:/docker-entrypoint-initdb.d:ro
       - postgres_data:/var/lib/postgresql/data
     environment:
+      # Local-only throwaway credentials. Everything real is minted by Terraform
+      # into Secrets Manager and reaches the cluster through External Secrets —
+      # nothing here is shared with any deployed environment.
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
+    # run-stack.sh gates on health=healthy before starting the Go services, so
+    # this is a real startup barrier rather than decoration. The tight interval
+    # keeps a cold start to a couple of seconds.
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 2s
@@ -42,6 +89,10 @@ services:
       - "${REDIS_HOST_PORT:-6379}:6379"
     environment:
       REDIS_PASSWORD: password
+    # $$ is an escaped $: it survives Compose's own interpolation so the shell
+    # inside the container expands REDIS_PASSWORD. A single $ makes Compose
+    # substitute at parse time — on the host, where the variable is unset — and
+    # Redis silently starts with an EMPTY password.
     command: sh -c 'redis-server --save 20 1 --loglevel warning --requirepass $${REDIS_PASSWORD}'
     volumes:
       - redis_data:/data
@@ -55,6 +106,7 @@ services:
 
   pgadmin:
     # container_name removed for parallel-stack isolation (see postgres above).
+    # Convenience only — nothing depends on pgadmin, so it is safe to stop.
     image: dpage/pgadmin4
     restart: always
     environment:
@@ -63,8 +115,13 @@ services:
     ports:
       - "${PGADMIN_HOST_PORT:-5050}:80"
     volumes:
+      # Pre-registers the local server and its password so there is no click-through
+      # on a fresh stack. .pgpass must be mode 0600 inside the container or pgAdmin
+      # ignores it without warning.
       - ./docker/pgadmin_config/servers.json:/pgadmin4/servers.json
       - ./docker/pgadmin_config/.pgpass:/var/lib/pgadmin/.pgpass
+    # Plain depends_on waits for the container to START, not to be healthy.
+    # Harmless here: pgAdmin reconnects on its own, and nothing gates on it.
     depends_on:
       - postgres
     networks:
@@ -72,23 +129,45 @@ services:
 
   otel-lgtm:
     # container_name removed for parallel-stack isolation (see postgres above).
+    #
+    # Loki/Grafana/Tempo/Mimir in one container — the local stand-in for the
+    # observability stack Flux deploys to the cluster. Services push OTLP here,
+    # so traces and metrics can be checked locally without an EKS round trip.
     image: grafana/otel-lgtm:0.11.7
     restart: unless-stopped
     ports:
       - "${OTEL_GRPC_HOST_PORT:-4317}:4317"
       - "${OTEL_HTTP_HOST_PORT:-4318}:4318"
+      # Grafana is on 3001 by default, NOT 3000 — the UI dev server owns 3000.
       - "${GRAFANA_HOST_PORT:-3001}:3000"
     volumes:
       - otel_lgtm_data:/data
-      - ./deployment/grafana/dashboards:/otel-lgtm/grafana-dashboards-utro:ro
-      - ./deployment/grafana/provisioning/dashboards/utro-dashboards.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/utro-dashboards.yaml:ro
+      # Under docker/: these dashboards exist ONLY for this
+      # compose stack. 
+      # Keep a missing path in mind if you edit these: Docker silently CREATES a
+      # missing bind-mount source instead of failing, so a typo here yields an
+      # empty dashboard folder — and, for the file mount, a directory where
+      # Grafana wants a YAML file. Grafana starts fine either way and logs
+      # nothing useful, so the symptom is just "the dashboards vanished".
+      #
+      # The `path:` inside utro-dashboards.yaml is the CONTAINER path
+      # (/otel-lgtm/grafana-dashboards-utro), so it tracks the mount target on
+      # the right below, not the host directory on the left.
+      - ./docker/grafana/dashboards:/otel-lgtm/grafana-dashboards-utro:ro
+      - ./docker/grafana/provisioning/dashboards/utro-dashboards.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/utro-dashboards.yaml:ro
     networks:
       - rpg
 
+# Named `rpg` after the database, and namespaced by COMPOSE_PROJECT_NAME, so
+# each parallel stack gets its own bridge. Services reach each other by service
+# name (postgres:5432, redis:6379) — the ${..._HOST_PORT} mappings above are for
+# the host only, and using them from inside a container will not resolve.
 networks:
   rpg:
     driver: bridge
 
+# Also namespaced per project, so `docker compose down -v` wipes only this
+# stack's data. Dropping postgres_data is what forces initdb.d to re-run.
 volumes:
   postgres_data:
   redis_data:
